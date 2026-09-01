@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Study Planner"
+description = "A focused study planning app that turns natural-language deadlines into realistic study sessions, breaks work into actionable steps, and keeps students on track with a clear today view."
+version = "1.0.0"
+id = "artifacts/study-planner"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18986
+
+[services.development]
+run = "pnpm --filter @workspace/study-planner run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/study-planner", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/study-planner/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18986"
+BASE_PATH = "/"

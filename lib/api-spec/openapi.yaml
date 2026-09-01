@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: planner
+    description: Study planning operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,127 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /planner/dashboard:
+    get:
+      operationId: getPlannerDashboard
+      tags: [planner]
+      summary: Get the current study dashboard
+      description: Returns today's focus, upcoming study sessions, deadlines, and workload summary.
+      responses:
+        "200":
+          description: Planner dashboard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlannerDashboard"
+  /planner/plans:
+    post:
+      operationId: createStudyPlan
+      tags: [planner]
+      summary: Turn a natural-language note into a study plan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StudyPlanInput"
+      responses:
+        "201":
+          description: Created study plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudyPlan"
+        "400":
+          description: Invalid plan input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /planner/tasks/{id}:
+    patch:
+      operationId: updatePlannerTask
+      tags: [planner]
+      summary: Update a study task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskUpdate"
+      responses:
+        "200":
+          description: Updated study task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudyTask"
+        "404":
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /planner/sessions/{id}/complete:
+    post:
+      operationId: completeStudySession
+      tags: [planner]
+      summary: Mark a study session complete
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Completed study session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudySession"
+        "404":
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /planner/sessions/{id}/reschedule:
+    post:
+      operationId: rescheduleStudySession
+      tags: [planner]
+      summary: Move a study session to another day
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionRescheduleInput"
+      responses:
+        "200":
+          description: Rescheduled study session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudySession"
+        "404":
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +156,185 @@ components:
           type: string
       required:
         - status
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+    Assignment:
+      type: object
+      properties:
+        id:
+          type: number
+        title:
+          type: string
+        subject:
+          type: string
+        dueDate:
+          type: string
+          format: date
+        dueLabel:
+          type: string
+        totalMinutes:
+          type: number
+        completedMinutes:
+          type: number
+        status:
+          type: string
+          enum: [on_track, at_risk, complete]
+        accent:
+          type: string
+      required: [id, title, subject, dueDate, dueLabel, totalMinutes, completedMinutes, status, accent]
+    StudyTask:
+      type: object
+      properties:
+        id:
+          type: number
+        assignmentId:
+          type: number
+        title:
+          type: string
+        durationMinutes:
+          type: number
+        status:
+          type: string
+          enum: [todo, done]
+        sortOrder:
+          type: number
+      required: [id, assignmentId, title, durationMinutes, status, sortOrder]
+    StudySession:
+      type: object
+      properties:
+        id:
+          type: number
+        taskId:
+          type: number
+        assignmentId:
+          type: number
+        title:
+          type: string
+        subject:
+          type: string
+        date:
+          type: string
+          format: date
+        startTime:
+          type: string
+        endTime:
+          type: string
+        durationMinutes:
+          type: number
+        status:
+          type: string
+          enum: [scheduled, complete, skipped]
+        isToday:
+          type: boolean
+      required: [id, taskId, assignmentId, title, subject, date, startTime, endTime, durationMinutes, status, isToday]
+    TodayFocus:
+      type: object
+      properties:
+        sessionId:
+          type: number
+        taskId:
+          type: number
+        title:
+          type: string
+        subject:
+          type: string
+        startTime:
+          type: string
+        durationMinutes:
+          type: number
+        context:
+          type: string
+      required: [sessionId, taskId, title, subject, startTime, durationMinutes, context]
+    WorkloadDay:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        dayLabel:
+          type: string
+        minutes:
+          type: number
+        sessionCount:
+          type: number
+        isToday:
+          type: boolean
+      required: [date, dayLabel, minutes, sessionCount, isToday]
+    PlannerDashboard:
+      type: object
+      properties:
+        greeting:
+          type: string
+        dateLabel:
+          type: string
+        todayFocus:
+          oneOf:
+            - $ref: "#/components/schemas/TodayFocus"
+            - type: "null"
+        todaySessions:
+          type: array
+          items:
+            $ref: "#/components/schemas/StudySession"
+        upcomingAssignments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Assignment"
+        workload:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkloadDay"
+        totalMinutesThisWeek:
+          type: number
+        completedSessions:
+          type: number
+        streakDays:
+          type: number
+      required: [greeting, dateLabel, todayFocus, todaySessions, upcomingAssignments, workload, totalMinutesThisWeek, completedSessions, streakDays]
+    StudyPlanInput:
+      type: object
+      properties:
+        note:
+          type: string
+          minLength: 3
+        availableMinutesPerDay:
+          type: number
+          minimum: 15
+          maximum: 480
+      required: [note]
+    StudyPlan:
+      type: object
+      properties:
+        assignments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Assignment"
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/StudyTask"
+        sessions:
+          type: array
+          items:
+            $ref: "#/components/schemas/StudySession"
+        summary:
+          type: string
+      required: [assignments, tasks, sessions, summary]
+    TaskUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [todo, done]
+      required: [status]
+    SessionRescheduleInput:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+      required: [date]
 
