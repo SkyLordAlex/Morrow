@@ -1,0 +1,71 @@
+Build a complete monetization system for my iOS AI Study Planner app.
+
+The app should use a freemium model:
+
+FREE PLAN:
+
+* Users can create up to 3 AI study plans per month.
+* Users can add assignments, classes, exams, and deadlines.
+* Users can use the basic calendar and task checklist.
+* Clearly show how many AI generations they have remaining.
+
+PREMIUM PLAN:
+
+* Unlimited AI study plans.
+* Unlimited assignments and classes.
+* AI-generated flashcards.
+* AI-generated practice quizzes.
+* Personalized daily study schedules.
+* Advanced progress tracking.
+* No advertisements.
+* Premium badge in the user's profile.
+
+PRICING:
+
+* Monthly subscription: $4.99/month.
+* Yearly subscription: $39.99/year.
+* The yearly plan should be presented as the better-value option.
+* Include a 7-day free trial if supported by the chosen payment system.
+
+PAYMENT SYSTEM:
+
+* This will ultimately be an iOS App Store app.
+* Use Apple's official in-app purchase/subscription system for digital premium features when required by Apple's rules.
+* Structure the code so the product IDs, subscription status, and purchase/restore-purchase logic are easy to configure later.
+* Do NOT put Apple credentials, private keys, API keys, or other secrets directly in the source code.
+* Use environment variables/secrets for anything that actually needs to remain private.
+* Include Restore Purchases functionality.
+* If a purchase fails or is cancelled, show a clear message and keep the user on the free plan.
+* If a subscription expires, automatically remove premium access.
+* Premium access must be determined by verified subscription status rather than simply trusting a value stored on the user's device.
+
+PAYWALL:
+Create a polished premium paywall screen with:
+
+* “Upgrade to Premium”
+* Monthly and yearly options
+* Feature comparison between Free and Premium
+* Subscribe button
+* Restore Purchases button
+* Terms of Use and Privacy Policy links
+* Clear pricing
+* No misleading claims or fake scarcity
+
+ACCOUNT SYSTEM:
+
+* Create user accounts so subscription status can be associated with the user's account.
+* Store only the information necessary for the app to function.
+* Make the subscription system secure and prevent users from simply changing a local value to unlock Premium.
+
+DEVELOPER MODE:
+Create a safe test/development mode so I can test the Premium UI and subscription flows without charging real money.
+Do not create a way for normal users to bypass payment.
+
+IMPORTANT:
+
+* First inspect the existing project and determine whether it is a native iOS/Expo/React Native project.
+* Use the appropriate Apple/Expo-compatible architecture.
+* Do not pretend that payments are fully configured if Apple Developer/App Store Connect setup is still required.
+* Give me a clear checklist of everything I need to configure in App Store Connect before submitting the app.
+* Keep the code organized and explain where I need to enter product IDs and other configuration.
+* Make the app work without Premium so I can test the free version before setting up payments.
