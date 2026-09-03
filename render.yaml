@@ -51,10 +51,7 @@ services:
       - key: BASE_PATH
         value: /
       - key: VITE_API_URL
-        fromService:
-          type: web
-          name: morrow-api
-          property: host
+        sync: false # set to the full API URL, e.g. https://morrow-api-xxxx.onrender.com
       - key: VITE_GOOGLE_CLIENT_ID
         sync: false # optional — must match one of GOOGLE_CLIENT_IDS
       - key: VITE_APPLE_CLIENT_ID
