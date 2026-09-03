@@ -6,12 +6,26 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './adminStats';
+export * from './adminUser';
+export * from './adminUserList';
+export * from './adminUserRole';
+export * from './appleAuthInput';
 export * from './assignment';
 export * from './assignmentStatus';
+export * from './authResult';
 export * from './errorResponse';
+export * from './googleAuthInput';
 export * from './healthStatus';
+export * from './loginInput';
 export * from './plannerDashboard';
+export * from './registerInput';
+export * from './review';
+export * from './reviewInput';
+export * from './reviewSummary';
 export * from './sessionRescheduleInput';
+export * from './setRoleInput';
+export * from './setRoleInputRole';
 export * from './studyPlan';
 export * from './studyPlanInput';
 export * from './studySession';
@@ -21,4 +35,6 @@ export * from './studyTaskStatus';
 export * from './taskUpdate';
 export * from './taskUpdateStatus';
 export * from './todayFocus';
+export * from './user';
+export * from './userRole';
 export * from './workloadDay';

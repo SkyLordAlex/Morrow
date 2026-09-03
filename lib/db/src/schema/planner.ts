@@ -1,8 +1,18 @@
 import { integer, pgTable, serial, text, date } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
+import { usersTable } from "./auth";
+
+// Every planner row is owned by exactly one user. `onDelete: "cascade"` means
+// deleting an account (see routes/auth.ts `DELETE /auth/account`) clears all of
+// their planner data in one statement.
+const userId = () =>
+  integer("user_id")
+    .notNull()
+    .references(() => usersTable.id, { onDelete: "cascade" });
 
 export const assignmentsTable = pgTable("study_assignments", {
   id: serial("id").primaryKey(),
+  userId: userId(),
   title: text("title").notNull(),
   subject: text("subject").notNull(),
   dueDate: date("due_date").notNull(),
@@ -15,6 +25,7 @@ export const assignmentsTable = pgTable("study_assignments", {
 
 export const studyTasksTable = pgTable("study_tasks", {
   id: serial("id").primaryKey(),
+  userId: userId(),
   assignmentId: integer("assignment_id")
     .notNull()
     .references(() => assignmentsTable.id, { onDelete: "cascade" }),
@@ -26,6 +37,7 @@ export const studyTasksTable = pgTable("study_tasks", {
 
 export const studySessionsTable = pgTable("study_sessions", {
   id: serial("id").primaryKey(),
+  userId: userId(),
   taskId: integer("task_id")
     .notNull()
     .references(() => studyTasksTable.id, { onDelete: "cascade" }),

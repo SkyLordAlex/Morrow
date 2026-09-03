@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import {
   CompleteStudySessionParams,
   CompleteStudySessionResponse,
@@ -19,167 +19,39 @@ import {
   studySessionsTable,
   studyTasksTable,
 } from "@workspace/db";
+import {
+  addDaysKey,
+  daysBetweenKeys,
+  formatDateKey,
+  formatDueLabel,
+  greetingFor,
+  resolveTimeZone,
+  weekdayOfKey,
+  zonedDateKey,
+} from "../lib/zoned-time.js";
+import {
+  generatePlanFromNote,
+  isAiPlanningConfigured,
+} from "../lib/ai/plan.js";
+import { rulePlan } from "../lib/planner/rules.js";
+import {
+  describeBlockedWeekdays,
+  type GeneratedPlan,
+  type PlannedAssignment,
+} from "../lib/planner/types.js";
+import { logger } from "../lib/logger.js";
+import { currentUserId, requireAuth } from "../middlewares/require-auth.js";
 
 const router: IRouter = Router();
 
-const SUBJECTS = [
-  "biology",
-  "math",
-  "history",
-  "english",
-  "chemistry",
-  "physics",
-  "computer science",
-  "art",
-  "geography",
-  "psychology",
-];
+// Every route below is per-user: no handler touches a row it can't tie back to
+// `req.userId`.
+router.use(requireAuth);
 
 const ACCENTS = ["coral", "blue", "violet", "green", "amber"];
 
-type ParsedAssignment = {
-  title: string;
-  subject: string;
-  dueDate: string;
-  dueLabel: string;
-  kind: string;
-  taskTitles: string[];
-};
-
-function dateKey(date: Date) {
-  return date.toISOString().slice(0, 10);
-}
-
-function startOfDay(date = new Date()) {
-  const result = new Date(date);
-  result.setHours(0, 0, 0, 0);
-  return result;
-}
-
-function addDays(date: Date, days: number) {
-  const result = new Date(date);
-  result.setDate(result.getDate() + days);
-  return result;
-}
-
-function formatDueLabel(dueDate: string, today = startOfDay()) {
-  const due = startOfDay(new Date(`${dueDate}T12:00:00`));
-  const days = Math.round((due.getTime() - today.getTime()) / 86_400_000);
-  if (days === 0) return "Due today";
-  if (days === 1) return "Due tomorrow";
-  if (days < 7) {
-    return `Due ${due.toLocaleDateString("en-US", { weekday: "long" })}`;
-  }
-  return `Due ${due.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
-}
-
-function capitalize(value: string) {
-  return value.charAt(0).toUpperCase() + value.slice(1);
-}
-
-function parseDueDate(clause: string, today: Date) {
-  const normalized = clause.toLowerCase();
-  const weekdays = [
-    "sunday",
-    "monday",
-    "tuesday",
-    "wednesday",
-    "thursday",
-    "friday",
-    "saturday",
-  ];
-  const weekdayIndex = weekdays.findIndex((day) => normalized.includes(day));
-  if (weekdayIndex >= 0) {
-    const currentDay = today.getDay();
-    let daysAhead = (weekdayIndex - currentDay + 7) % 7;
-    if (daysAhead === 0 && !normalized.includes("today")) daysAhead = 7;
-    return dateKey(addDays(today, daysAhead));
-  }
-  if (normalized.includes("tomorrow")) return dateKey(addDays(today, 1));
-  if (normalized.includes("today")) return dateKey(today);
-  if (normalized.includes("next week")) {
-    const daysUntilMonday = (8 - today.getDay()) % 7 || 7;
-    return dateKey(addDays(today, daysUntilMonday));
-  }
-  return dateKey(addDays(today, 3));
-}
-
-function taskBlueprint(kind: string) {
-  if (kind === "test" || kind === "exam" || kind === "quiz") {
-    return [
-      ["Review class notes", 35],
-      ["Make a one-page study guide", 30],
-      ["Practice recall questions", 35],
-      ["Do a timed review", 20],
-    ] as const;
-  }
-  if (kind === "project" || kind === "presentation") {
-    return [
-      ["Choose a direction", 30],
-      ["Gather sources and examples", 45],
-      ["Build a rough outline", 35],
-      ["Draft the main work", 45],
-      ["Revise and polish", 25],
-    ] as const;
-  }
-  if (kind === "paper" || kind === "essay") {
-    return [
-      ["Choose a topic and question", 25],
-      ["Gather evidence", 40],
-      ["Write an outline", 25],
-      ["Draft the argument", 45],
-      ["Edit for clarity", 25],
-    ] as const;
-  }
-  return [
-    ["Understand the instructions", 15],
-    ["Complete the first half", 25],
-    ["Finish the work", 25],
-    ["Check answers and submit", 15],
-  ] as const;
-}
-
-function parseAssignments(note: string, today: Date): ParsedAssignment[] {
-  const clauses = note
-    .replace(/^\s*i\s+have\s+/i, "")
-    .replace(/,\s+and\s+/gi, ", ")
-    .split(/\s*,\s*|\s+\band\b\s+/i)
-    .map((part) => part.trim())
-    .filter(Boolean);
-
-  return clauses.map((clause, index) => {
-    const normalized = clause.replace(/^(a|an|the)\s+/i, "").trim();
-    const subjectMatch = SUBJECTS.find((subject) =>
-      normalized.toLowerCase().includes(subject),
-    );
-    const kindMatch = normalized.match(
-      /\b(test|exam|homework|project|paper|essay|quiz|presentation|assignment)\b/i,
-    );
-    const kind = (kindMatch?.[1] ?? "assignment").toLowerCase();
-    const subject = subjectMatch
-      ? capitalize(subjectMatch)
-      : capitalize(normalized.split(/\s+/)[0] ?? `Subject ${index + 1}`);
-    const dueDate = parseDueDate(normalized, today);
-    const beforeDue = normalized
-      .split(/\bdue\b|\b(today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday|next week)\b/i)[0]
-      .trim()
-      .replace(/[.!?]+$/, "");
-    const fallbackTitle = `${subject} ${kind}`;
-    const title = beforeDue.length >= 4 ? capitalize(beforeDue) : fallbackTitle;
-
-    return {
-      title,
-      subject,
-      dueDate,
-      dueLabel: formatDueLabel(dueDate, today),
-      kind,
-      taskTitles: taskBlueprint(kind).map(([taskTitle]) => taskTitle),
-    };
-  });
-}
-
-function startTimeFor(date: Date, sessionNumber: number) {
-  const day = date.getDay();
+function startTimeFor(dateKeyValue: string, sessionNumber: number) {
+  const day = weekdayOfKey(dateKeyValue);
   const base = day === 0 || day === 6 ? 10 : 16;
   const hour = base + Math.floor((sessionNumber * 50) / 60);
   const minute = (sessionNumber * 50) % 60;
@@ -192,95 +64,26 @@ function endTime(startTime: string, minutes: number) {
   return `${String(Math.floor(total / 60) % 24).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
 }
 
-function dueStatus(dueDate: string, total: number, completed: number) {
+function dueStatus(
+  dueDate: string,
+  total: number,
+  completed: number,
+  todayKey: string,
+) {
   if (completed >= total) return "complete";
-  const days = Math.ceil(
-    (startOfDay(new Date(`${dueDate}T12:00:00`)).getTime() - startOfDay().getTime()) /
-      86_400_000,
-  );
+  const days = daysBetweenKeys(todayKey, dueDate);
   return days <= 1 && completed < total * 0.5 ? "at_risk" : "on_track";
 }
 
-async function ensureSeedData() {
-  const existing = await db.select({ id: assignmentsTable.id }).from(assignmentsTable).limit(1);
-  if (existing.length > 0) return;
-
-  const today = startOfDay();
-  const seed = [
-    {
-      title: "Biology test",
-      subject: "Biology",
-      dueDate: dateKey(addDays(today, 3)),
-      dueLabel: formatDueLabel(dateKey(addDays(today, 3)), today),
-      kind: "test",
-      accent: "coral",
-    },
-    {
-      title: "Math homework",
-      subject: "Math",
-      dueDate: dateKey(addDays(today, 2)),
-      dueLabel: formatDueLabel(dateKey(addDays(today, 2)), today),
-      kind: "homework",
-      accent: "blue",
-    },
-    {
-      title: "History project",
-      subject: "History",
-      dueDate: dateKey(addDays(today, 7)),
-      dueLabel: formatDueLabel(dateKey(addDays(today, 7)), today),
-      kind: "project",
-      accent: "violet",
-    },
-  ];
-
-  for (const [assignmentIndex, item] of seed.entries()) {
-    const blueprint = taskBlueprint(item.kind);
-    const totalMinutes = blueprint.reduce((sum, [, minutes]) => sum + minutes, 0);
-    const [assignment] = await db
-      .insert(assignmentsTable)
-      .values({
-        title: item.title,
-        subject: item.subject,
-        dueDate: item.dueDate,
-        dueLabel: item.dueLabel,
-        totalMinutes,
-        completedMinutes: 0,
-        status: "on_track",
-        accent: item.accent,
-      })
-      .returning();
-
-    for (const [taskIndex, [taskTitle, durationMinutes]] of blueprint.entries()) {
-      const [task] = await db
-        .insert(studyTasksTable)
-        .values({
-          assignmentId: assignment.id,
-          title: taskTitle,
-          durationMinutes,
-          status: "todo",
-          sortOrder: taskIndex,
-        })
-        .returning();
-      const sessionDate = addDays(today, Math.min(taskIndex % 4, assignmentIndex + 2));
-      const startTime = startTimeFor(sessionDate, taskIndex);
-      await db.insert(studySessionsTable).values({
-        taskId: task.id,
-        assignmentId: assignment.id,
-        date: dateKey(sessionDate),
-        startTime,
-        endTime: endTime(startTime, durationMinutes),
-        durationMinutes,
-        status: "scheduled",
-      });
-    }
-  }
+async function getAssignmentRows(userId: number) {
+  return db
+    .select()
+    .from(assignmentsTable)
+    .where(eq(assignmentsTable.userId, userId))
+    .orderBy(asc(assignmentsTable.dueDate));
 }
 
-async function getAssignmentRows() {
-  return db.select().from(assignmentsTable).orderBy(asc(assignmentsTable.dueDate));
-}
-
-async function getSessionRows() {
+async function getSessionRows(userId: number) {
   return db
     .select({
       id: studySessionsTable.id,
@@ -297,29 +100,54 @@ async function getSessionRows() {
     .from(studySessionsTable)
     .innerJoin(studyTasksTable, eq(studyTasksTable.id, studySessionsTable.taskId))
     .innerJoin(assignmentsTable, eq(assignmentsTable.id, studySessionsTable.assignmentId))
+    .where(eq(studySessionsTable.userId, userId))
     .orderBy(asc(studySessionsTable.date), asc(studySessionsTable.startTime));
 }
 
-async function updateAssignmentProgress(assignmentId: number) {
+async function updateAssignmentProgress(
+  userId: number,
+  assignmentId: number,
+  todayKey: string,
+) {
   const tasks = await db
     .select()
     .from(studyTasksTable)
-    .where(eq(studyTasksTable.assignmentId, assignmentId));
+    .where(
+      and(
+        eq(studyTasksTable.userId, userId),
+        eq(studyTasksTable.assignmentId, assignmentId),
+      ),
+    );
   const completedMinutes = tasks
     .filter((task) => task.status === "done")
     .reduce((sum, task) => sum + task.durationMinutes, 0);
   const assignment = (await db
     .select()
     .from(assignmentsTable)
-    .where(eq(assignmentsTable.id, assignmentId)))[0];
+    .where(
+      and(
+        eq(assignmentsTable.userId, userId),
+        eq(assignmentsTable.id, assignmentId),
+      ),
+    ))[0];
   if (!assignment) return;
   await db
     .update(assignmentsTable)
     .set({
       completedMinutes,
-      status: dueStatus(assignment.dueDate, assignment.totalMinutes, completedMinutes),
+      status: dueStatus(
+        assignment.dueDate,
+        assignment.totalMinutes,
+        completedMinutes,
+        todayKey,
+      ),
     })
-    .where(eq(assignmentsTable.id, assignmentId));
+    .where(
+      and(
+        eq(assignmentsTable.userId, userId),
+        eq(assignmentsTable.id, assignmentId),
+      ),
+    );
 }
 
 function sessionView(
@@ -333,12 +161,13 @@ function sessionView(
   };
 }
 
-async function buildDashboard() {
-  await ensureSeedData();
-  const today = startOfDay();
-  const todayKey = dateKey(today);
-  const assignments = await getAssignmentRows();
-  const sessions = (await getSessionRows()).map((row) => sessionView(row, todayKey));
+async function buildDashboard(userId: number, timeZone: string) {
+  const now = new Date();
+  const todayKey = zonedDateKey(timeZone, now);
+  const assignments = await getAssignmentRows(userId);
+  const sessions = (await getSessionRows(userId)).map((row) =>
+    sessionView(row, todayKey),
+  );
   const todaySessions = sessions.filter(
     (session) => session.date === todayKey && session.status !== "complete",
   );
@@ -347,16 +176,15 @@ async function buildDashboard() {
     .slice(0, 5)
     .map((assignment) => ({
       ...assignment,
-      dueLabel: formatDueLabel(assignment.dueDate, today),
+      dueLabel: formatDueLabel(assignment.dueDate, todayKey),
     }));
   const workload = Array.from({ length: 7 }, (_, index) => {
-    const date = dateKey(addDays(today, index));
+    const date = addDaysKey(todayKey, index);
     const daySessions = sessions.filter((session) => session.date === date && session.status !== "complete");
     return {
       date,
-      dayLabel: index === 0
-        ? "Today"
-        : addDays(today, index).toLocaleDateString("en-US", { weekday: "short" }),
+      dayLabel:
+        index === 0 ? "Today" : formatDateKey(date, { weekday: "short" }),
       minutes: daySessions.reduce((sum, session) => sum + session.durationMinutes, 0),
       sessionCount: daySessions.length,
       isToday: index === 0,
@@ -377,8 +205,8 @@ async function buildDashboard() {
     : null;
 
   return GetPlannerDashboardResponse.parse({
-    greeting: "Good afternoon",
-    dateLabel: today.toLocaleDateString("en-US", {
+    greeting: greetingFor(timeZone, now),
+    dateLabel: formatDateKey(todayKey, {
       weekday: "long",
       month: "long",
       day: "numeric",
@@ -393,9 +221,11 @@ async function buildDashboard() {
   });
 }
 
-router.get("/planner/dashboard", async (_req, res, next) => {
+router.get("/planner/dashboard", async (req, res, next) => {
   try {
-    res.json(await buildDashboard());
+    const userId = currentUserId(req);
+    const timeZone = resolveTimeZone(req.get("x-time-zone"));
+    res.json(await buildDashboard(userId, timeZone));
   } catch (error) {
     next(error);
   }
@@ -403,26 +233,59 @@ router.get("/planner/dashboard", async (_req, res, next) => {
 
 router.post("/planner/plans", async (req, res, next) => {
   try {
+    const userId = currentUserId(req);
     const input = CreateStudyPlanBody.parse(req.body);
-    const today = startOfDay();
-    const parsed = parseAssignments(input.note, today);
+    const timeZone = resolveTimeZone(req.get("x-time-zone"));
+    const todayKey = zonedDateKey(timeZone);
     const availableMinutes = input.availableMinutesPerDay ?? 90;
+
+    // Real AI when a Gemini key is configured; the rule-based parser otherwise
+    // or if the model call fails.
+    let plan: GeneratedPlan;
+    let planSource: "ai" | "rules" = "rules";
+    if (isAiPlanningConfigured()) {
+      try {
+        plan = await generatePlanFromNote(
+          input.note,
+          todayKey,
+          availableMinutes,
+        );
+        planSource = "ai";
+      } catch (error) {
+        logger.warn(
+          { reason: error instanceof Error ? error.message : String(error) },
+          "AI plan generation failed; falling back to the rule-based parser",
+        );
+        plan = rulePlan(input.note, todayKey);
+      }
+    } else {
+      plan = rulePlan(input.note, todayKey);
+    }
+
+    const planned: PlannedAssignment[] = plan.assignments;
+    const blockedWeekdays = plan.blockedWeekdays;
+    const isBlockedDay = (dateKey: string) =>
+      blockedWeekdays.includes(weekdayOfKey(dateKey));
+
     const assignments = [];
     const tasks = [];
     const sessions = [];
     const dayUsage = new Map<string, number>();
     let sessionNumber = 0;
 
-    for (const [assignmentIndex, item] of parsed.entries()) {
-      const blueprint = taskBlueprint(item.kind);
-      const totalMinutes = blueprint.reduce((sum, [, minutes]) => sum + minutes, 0);
+    for (const [assignmentIndex, item] of planned.entries()) {
+      const totalMinutes = item.tasks.reduce(
+        (sum, task) => sum + task.durationMinutes,
+        0,
+      );
       const [assignment] = await db
         .insert(assignmentsTable)
         .values({
+          userId,
           title: item.title,
           subject: item.subject,
           dueDate: item.dueDate,
-          dueLabel: item.dueLabel,
+          dueLabel: formatDueLabel(item.dueDate, todayKey),
           totalMinutes,
           completedMinutes: 0,
           status: "on_track",
@@ -431,15 +294,17 @@ router.post("/planner/plans", async (req, res, next) => {
         .returning();
       assignments.push({
         ...assignment,
-        dueLabel: formatDueLabel(assignment.dueDate, today),
+        dueLabel: formatDueLabel(assignment.dueDate, todayKey),
       });
 
-      for (const [taskIndex, [taskTitle, durationMinutes]] of blueprint.entries()) {
+      for (const [taskIndex, plannedTask] of item.tasks.entries()) {
+        const durationMinutes = plannedTask.durationMinutes;
         const [task] = await db
           .insert(studyTasksTable)
           .values({
+            userId,
             assignmentId: assignment.id,
-            title: taskTitle,
+            title: plannedTask.title,
             durationMinutes,
             status: "todo",
             sortOrder: taskIndex,
@@ -447,22 +312,33 @@ router.post("/planner/plans", async (req, res, next) => {
           .returning();
         tasks.push(task);
 
-        let candidateDate = new Date(`${dateKey(today)}T12:00:00`);
-        const due = new Date(`${item.dueDate}T12:00:00`);
+        // Date keys compare correctly as strings (YYYY-MM-DD is
+        // lexicographically ordered), so the walk needs no Date objects.
+        // Skip days the student said they can't study, and days already at
+        // capacity — but never push past the due date.
+        let candidateDate = todayKey;
         while (
-          candidateDate < due &&
-          (dayUsage.get(dateKey(candidateDate)) ?? 0) + durationMinutes > availableMinutes
+          candidateDate < item.dueDate &&
+          (isBlockedDay(candidateDate) ||
+            (dayUsage.get(candidateDate) ?? 0) + durationMinutes >
+              availableMinutes)
         ) {
-          candidateDate = addDays(candidateDate, 1);
+          candidateDate = addDaysKey(candidateDate, 1);
         }
-        if (candidateDate > due) candidateDate = due;
-        const scheduledDate = dateKey(candidateDate);
+        if (candidateDate > item.dueDate) candidateDate = item.dueDate;
+        // If the due date itself is a day the student can't study, back up to
+        // the last day they can (never before today).
+        while (candidateDate > todayKey && isBlockedDay(candidateDate)) {
+          candidateDate = addDaysKey(candidateDate, -1);
+        }
+        const scheduledDate = candidateDate;
         dayUsage.set(scheduledDate, (dayUsage.get(scheduledDate) ?? 0) + durationMinutes);
-        const startTime = startTimeFor(candidateDate, sessionNumber % 3);
+        const startTime = startTimeFor(scheduledDate, sessionNumber % 3);
         sessionNumber += 1;
         const [session] = await db
           .insert(studySessionsTable)
           .values({
+            userId,
             taskId: task.id,
             assignmentId: assignment.id,
             date: scheduledDate,
@@ -476,19 +352,36 @@ router.post("/planner/plans", async (req, res, next) => {
           ...session,
           title: task.title,
           subject: assignment.subject,
-          isToday: scheduledDate === dateKey(today),
+          isToday: scheduledDate === todayKey,
         });
       }
     }
 
+    const avoiding = describeBlockedWeekdays(blockedWeekdays);
+    const base =
+      planSource === "ai"
+        ? `I read your note and broke it into ${tasks.length} steps across ${dayUsage.size} study days, keeping each day near ${availableMinutes} minutes`
+        : `I mapped ${tasks.length} small steps across ${dayUsage.size} study days, keeping each day under ${availableMinutes} minutes`;
+    const summary = avoiding
+      ? `${base}, and staying off ${avoiding}.`
+      : `${base}.`;
+
     res.status(201).json(
-      CreateStudyPlanResponse.parse({
-        assignments,
-        tasks,
-        sessions,
-        summary: `I mapped ${tasks.length} small steps across ${dayUsage.size} study days, keeping each day under ${availableMinutes} minutes.`,
-      }),
+      CreateStudyPlanResponse.parse({ assignments, tasks, sessions, summary }),
     );
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.delete("/planner/plans", async (req, res, next) => {
+  try {
+    // ON DELETE CASCADE on study_tasks.assignment_id and
+    // study_sessions.assignment_id clears the tasks and sessions too.
+    await db
+      .delete(assignmentsTable)
+      .where(eq(assignmentsTable.userId, currentUserId(req)));
+    res.status(204).end();
   } catch (error) {
     next(error);
   }
@@ -496,23 +389,30 @@ router.post("/planner/plans", async (req, res, next) => {
 
 router.patch("/planner/tasks/:id", async (req, res, next) => {
   try {
+    const userId = currentUserId(req);
     const { id } = UpdatePlannerTaskParams.parse(req.params);
     const { status } = UpdatePlannerTaskBody.parse(req.body);
+    const timeZone = resolveTimeZone(req.get("x-time-zone"));
     const [task] = await db
       .update(studyTasksTable)
       .set({ status })
-      .where(eq(studyTasksTable.id, id))
+      .where(and(eq(studyTasksTable.id, id), eq(studyTasksTable.userId, userId)))
       .returning();
     if (!task) {
       res.status(404).json({ error: "Task not found" });
       return;
     }
-    await updateAssignmentProgress(task.assignmentId);
+    await updateAssignmentProgress(userId, task.assignmentId, zonedDateKey(timeZone));
     if (status === "done") {
       await db
         .update(studySessionsTable)
         .set({ status: "complete" })
-        .where(eq(studySessionsTable.taskId, id));
+        .where(
+          and(
+            eq(studySessionsTable.taskId, id),
+            eq(studySessionsTable.userId, userId),
+          ),
+        );
     }
     res.json(UpdatePlannerTaskResponse.parse(task));
   } catch (error) {
@@ -522,11 +422,18 @@ router.patch("/planner/tasks/:id", async (req, res, next) => {
 
 router.post("/planner/sessions/:id/complete", async (req, res, next) => {
   try {
+    const userId = currentUserId(req);
     const { id } = CompleteStudySessionParams.parse(req.params);
+    const timeZone = resolveTimeZone(req.get("x-time-zone"));
     const [session] = await db
       .update(studySessionsTable)
       .set({ status: "complete" })
-      .where(eq(studySessionsTable.id, id))
+      .where(
+        and(
+          eq(studySessionsTable.id, id),
+          eq(studySessionsTable.userId, userId),
+        ),
+      )
       .returning();
     if (!session) {
       res.status(404).json({ error: "Session not found" });
@@ -535,11 +442,16 @@ router.post("/planner/sessions/:id/complete", async (req, res, next) => {
     await db
       .update(studyTasksTable)
       .set({ status: "done" })
-      .where(eq(studyTasksTable.id, session.taskId));
-    await updateAssignmentProgress(session.assignmentId);
-    const [view] = (await getSessionRows())
+      .where(
+        and(
+          eq(studyTasksTable.id, session.taskId),
+          eq(studyTasksTable.userId, userId),
+        ),
+      );
+    await updateAssignmentProgress(userId, session.assignmentId, zonedDateKey(timeZone));
+    const [view] = (await getSessionRows(userId))
       .filter((row) => row.id === id)
-      .map((row) => sessionView(row, dateKey(startOfDay())));
+      .map((row) => sessionView(row, zonedDateKey(timeZone)));
     res.json(CompleteStudySessionResponse.parse(view));
   } catch (error) {
     next(error);
@@ -548,21 +460,31 @@ router.post("/planner/sessions/:id/complete", async (req, res, next) => {
 
 router.post("/planner/sessions/:id/reschedule", async (req, res, next) => {
   try {
+    const userId = currentUserId(req);
     const { id } = RescheduleStudySessionParams.parse(req.params);
     const { date } = RescheduleStudySessionBody.parse(req.body);
-    const dateValue = dateKey(date);
+    const timeZone = resolveTimeZone(req.get("x-time-zone"));
+    // The generated type says Date, but a date-format field arrives as a
+    // "YYYY-MM-DD" string. Handle both rather than assuming.
+    const dateValue =
+      typeof date === "string" ? date : date.toISOString().slice(0, 10);
     const [session] = await db
       .update(studySessionsTable)
       .set({ date: dateValue, status: "scheduled" })
-      .where(eq(studySessionsTable.id, id))
+      .where(
+        and(
+          eq(studySessionsTable.id, id),
+          eq(studySessionsTable.userId, userId),
+        ),
+      )
       .returning();
     if (!session) {
       res.status(404).json({ error: "Session not found" });
       return;
     }
-    const [view] = (await getSessionRows())
+    const [view] = (await getSessionRows(userId))
       .filter((row) => row.id === id)
-      .map((row) => sessionView(row, dateKey(startOfDay())));
+      .map((row) => sessionView(row, zonedDateKey(timeZone)));
     res.json(RescheduleStudySessionResponse.parse(view));
   } catch (error) {
     next(error);

@@ -17,6 +17,29 @@ const DEFAULT_JSON_ACCEPT = "application/json, application/problem+json";
 
 let _baseUrl: string | null = null;
 let _authTokenGetter: AuthTokenGetter | null = null;
+let _timeZone: string | null | undefined;
+
+/**
+ * Resolve the device's IANA time zone (e.g. "America/New_York"), cached after
+ * the first lookup. Returns null when the runtime can't report one.
+ */
+function resolveTimeZone(): string | null {
+  if (_timeZone !== undefined) return _timeZone;
+  try {
+    _timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+  } catch {
+    _timeZone = null;
+  }
+  return _timeZone;
+}
+
+/**
+ * Override the time zone sent to the API. Rarely needed — the device zone is
+ * detected automatically. Pass null to go back to auto-detection.
+ */
+export function setTimeZone(timeZone: string | null): void {
+  _timeZone = timeZone ?? undefined;
+}
 
 /**
  * Set a base URL that is prepended to every relative request URL
@@ -347,6 +370,16 @@ export async function customFetch<T = unknown>(
 
   if (responseType === "json" && !headers.has("accept")) {
     headers.set("accept", DEFAULT_JSON_ACCEPT);
+  }
+
+  // Tell the API which calendar day the user is actually in. Without this the
+  // server falls back to UTC, which puts anyone west of Greenwich on the wrong
+  // day for part of every evening.
+  if (!headers.has("x-time-zone")) {
+    const timeZone = resolveTimeZone();
+    if (timeZone) {
+      headers.set("x-time-zone", timeZone);
+    }
   }
 
   // Attach bearer token when an auth getter is configured and no

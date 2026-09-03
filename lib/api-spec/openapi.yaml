@@ -10,6 +10,12 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Account and session operations
+  - name: reviews
+    description: User reviews of the app
+  - name: admin
+    description: Admin-only operations
   - name: planner
     description: Study planning operations
 paths:
@@ -26,6 +32,351 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Create an account with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+      responses:
+        "201":
+          description: Account created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResult"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Email already registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Sign in with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResult"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /auth/apple:
+    post:
+      operationId: authApple
+      tags: [auth]
+      summary: Sign in with an Apple identity token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AppleAuthInput"
+      responses:
+        "200":
+          description: Signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResult"
+        "401":
+          description: Token could not be verified
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /auth/google:
+    post:
+      operationId: authGoogle
+      tags: [auth]
+      summary: Sign in with a Google ID token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GoogleAuthInput"
+      responses:
+        "200":
+          description: Signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResult"
+        "401":
+          description: Token could not be verified
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /auth/session:
+    get:
+      operationId: getAuthSession
+      tags: [auth]
+      summary: Get the signed-in user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Not signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Revoke the current session
+      responses:
+        "204":
+          description: Signed out
+        "401":
+          description: Not signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /auth/account:
+    delete:
+      operationId: deleteAccount
+      tags: [auth]
+      summary: Permanently delete the signed-in account and all its data
+      responses:
+        "204":
+          description: Account deleted
+        "401":
+          description: Not signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /reviews:
+    get:
+      operationId: listReviews
+      tags: [reviews]
+      summary: All reviews plus the average rating
+      responses:
+        "200":
+          description: Review list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewSummary"
+        "401":
+          description: Not signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /reviews/me:
+    put:
+      operationId: upsertMyReview
+      tags: [reviews]
+      summary: Create or update the signed-in user's review
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewInput"
+      responses:
+        "200":
+          description: Saved review
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+        "400":
+          description: Invalid review
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteMyReview
+      tags: [reviews]
+      summary: Remove the signed-in user's review
+      responses:
+        "204":
+          description: Review removed
+        "401":
+          description: Not signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /reviews/{id}:
+    delete:
+      operationId: deleteReview
+      tags: [admin]
+      summary: Delete any review (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "204":
+          description: Review deleted
+        "403":
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Review not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/stats:
+    get:
+      operationId: getAdminStats
+      tags: [admin]
+      summary: App-wide counts
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+        "403":
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/users:
+    get:
+      operationId: listAdminUsers
+      tags: [admin]
+      summary: All user accounts
+      responses:
+        "200":
+          description: Users
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUserList"
+        "403":
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/users/{id}:
+    delete:
+      operationId: deleteUser
+      tags: [admin]
+      summary: Permanently delete a user account and all its data
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "204":
+          description: Account deleted
+        "400":
+          description: Can't delete your own account here
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/users/{id}/role:
+    patch:
+      operationId: setUserRole
+      tags: [admin]
+      summary: Promote or demote a user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetRoleInput"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Invalid role or self-change
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /planner/dashboard:
     get:
       operationId: getPlannerDashboard
@@ -59,6 +410,19 @@ paths:
                 $ref: "#/components/schemas/StudyPlan"
         "400":
           description: Invalid plan input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: clearPlanner
+      tags: [planner]
+      summary: Delete all of the signed-in user's assignments, tasks, and sessions
+      responses:
+        "204":
+          description: Planner cleared
+        "401":
+          description: Not signed in
           content:
             application/json:
               schema:
@@ -162,6 +526,178 @@ components:
         error:
           type: string
       required: [error]
+    User:
+      type: object
+      properties:
+        id:
+          type: number
+        email:
+          type: string
+        displayName:
+          oneOf:
+            - type: string
+            - type: "null"
+        role:
+          type: string
+          enum: [user, admin]
+      required: [id, email, displayName, role]
+    AdminStats:
+      type: object
+      properties:
+        userCount:
+          type: number
+        adminCount:
+          type: number
+        reviewCount:
+          type: number
+        averageRating:
+          type: number
+        assignmentCount:
+          type: number
+        sessionCount:
+          type: number
+        signupsLast7Days:
+          type: number
+      required:
+        - userCount
+        - adminCount
+        - reviewCount
+        - averageRating
+        - assignmentCount
+        - sessionCount
+        - signupsLast7Days
+    AdminUser:
+      type: object
+      properties:
+        id:
+          type: number
+        email:
+          type: string
+        displayName:
+          oneOf:
+            - type: string
+            - type: "null"
+        role:
+          type: string
+          enum: [user, admin]
+        createdAt:
+          type: string
+        reviewCount:
+          type: number
+        assignmentCount:
+          type: number
+      required:
+        - id
+        - email
+        - displayName
+        - role
+        - createdAt
+        - reviewCount
+        - assignmentCount
+    AdminUserList:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminUser"
+      required: [users]
+    SetRoleInput:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [user, admin]
+      required: [role]
+    AuthResult:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+      required: [token, user]
+    RegisterInput:
+      type: object
+      properties:
+        email:
+          type: string
+          minLength: 3
+        password:
+          type: string
+          minLength: 8
+        displayName:
+          type: string
+      required: [email, password]
+    LoginInput:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required: [email, password]
+    AppleAuthInput:
+      type: object
+      properties:
+        identityToken:
+          type: string
+          minLength: 1
+      required: [identityToken]
+    GoogleAuthInput:
+      type: object
+      properties:
+        idToken:
+          type: string
+          minLength: 1
+      required: [idToken]
+    Review:
+      type: object
+      properties:
+        id:
+          type: number
+        rating:
+          type: number
+        body:
+          oneOf:
+            - type: string
+            - type: "null"
+        authorName:
+          oneOf:
+            - type: string
+            - type: "null"
+        createdAt:
+          type: string
+        mine:
+          type: boolean
+      required: [id, rating, body, authorName, createdAt, mine]
+    ReviewSummary:
+      type: object
+      properties:
+        average:
+          type: number
+        count:
+          type: number
+        reviews:
+          type: array
+          items:
+            $ref: "#/components/schemas/Review"
+        myReview:
+          oneOf:
+            - $ref: "#/components/schemas/Review"
+            - type: "null"
+      required: [average, count, reviews, myReview]
+    ReviewInput:
+      type: object
+      properties:
+        rating:
+          type: number
+          minimum: 1
+          maximum: 5
+        body:
+          type: string
+          maxLength: 2000
+      required: [rating]
     Assignment:
       type: object
       properties:

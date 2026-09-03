@@ -13,6 +13,119 @@ export interface ErrorResponse {
   error: string;
 }
 
+export type UserRole = typeof UserRole[keyof typeof UserRole];
+
+
+export const UserRole = {
+  user: 'user',
+  admin: 'admin',
+} as const;
+
+export interface User {
+  id: number;
+  email: string;
+  displayName: string | null;
+  role: UserRole;
+}
+
+export interface AdminStats {
+  userCount: number;
+  adminCount: number;
+  reviewCount: number;
+  averageRating: number;
+  assignmentCount: number;
+  sessionCount: number;
+  signupsLast7Days: number;
+}
+
+export type AdminUserRole = typeof AdminUserRole[keyof typeof AdminUserRole];
+
+
+export const AdminUserRole = {
+  user: 'user',
+  admin: 'admin',
+} as const;
+
+export interface AdminUser {
+  id: number;
+  email: string;
+  displayName: string | null;
+  role: AdminUserRole;
+  createdAt: string;
+  reviewCount: number;
+  assignmentCount: number;
+}
+
+export interface AdminUserList {
+  users: AdminUser[];
+}
+
+export type SetRoleInputRole = typeof SetRoleInputRole[keyof typeof SetRoleInputRole];
+
+
+export const SetRoleInputRole = {
+  user: 'user',
+  admin: 'admin',
+} as const;
+
+export interface SetRoleInput {
+  role: SetRoleInputRole;
+}
+
+export interface AuthResult {
+  token: string;
+  user: User;
+}
+
+export interface RegisterInput {
+  /** @minLength 3 */
+  email: string;
+  /** @minLength 8 */
+  password: string;
+  displayName?: string;
+}
+
+export interface LoginInput {
+  email: string;
+  password: string;
+}
+
+export interface AppleAuthInput {
+  /** @minLength 1 */
+  identityToken: string;
+}
+
+export interface GoogleAuthInput {
+  /** @minLength 1 */
+  idToken: string;
+}
+
+export interface Review {
+  id: number;
+  rating: number;
+  body: string | null;
+  authorName: string | null;
+  createdAt: string;
+  mine: boolean;
+}
+
+export interface ReviewSummary {
+  average: number;
+  count: number;
+  reviews: Review[];
+  myReview: Review | null;
+}
+
+export interface ReviewInput {
+  /**
+     * @minimum 1
+     * @maximum 5
+     */
+  rating: number;
+  /** @maxLength 2000 */
+  body?: string;
+}
+
 export type AssignmentStatus = typeof AssignmentStatus[keyof typeof AssignmentStatus];
 
 

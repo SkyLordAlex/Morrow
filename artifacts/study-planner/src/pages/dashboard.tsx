@@ -8,8 +8,6 @@ import {
   Inbox,
   Leaf,
   Loader2,
-  LockKeyhole,
-  Menu,
   MoveRight,
   Plus,
   RefreshCcw,
@@ -35,6 +33,8 @@ import {
   useRescheduleStudySession,
   useUpdatePlannerTask,
 } from '@workspace/api-client-react';
+import { AppShell } from '@/components/app-shell';
+import { ClearPlannerButton } from '@/components/clear-planner-button';
 
 const accentStyles: Record<string, { ink: string; soft: string; line: string }> = {
   amber: { ink: '#B36A1E', soft: '#FFF0C9', line: '#E3B35D' },
@@ -104,148 +104,6 @@ function SectionHeading({
         </button>
       ) : null}
     </div>
-  );
-}
-
-function Sidebar({
-  mobileOpen,
-  onClose,
-  onPlan,
-}: {
-  mobileOpen: boolean;
-  onClose: () => void;
-  onPlan: () => void;
-}) {
-  const navItems = [
-    { label: 'Today', icon: Target, target: 'today-section', active: true },
-    { label: 'This week', icon: CalendarDays, target: 'week-section', active: false },
-    { label: 'Assignments', icon: Inbox, target: 'assignments-section', active: false },
-  ];
-
-  return (
-    <>
-      {mobileOpen ? (
-        <button
-          type="button"
-          aria-label="Close navigation"
-          data-testid="button-close-navigation"
-          onClick={onClose}
-          className="fixed inset-0 z-40 bg-[#123B35]/30 backdrop-blur-sm lg:hidden"
-        />
-      ) : null}
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-[248px] flex-col bg-sidebar px-5 py-6 text-sidebar-foreground transition-transform duration-300 lg:static lg:z-auto lg:translate-x-0 ${
-          mobileOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-        data-testid="navigation-sidebar"
-      >
-        <div className="flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => document.getElementById('today-section')?.scrollIntoView({ behavior: 'smooth' })}
-            data-testid="button-brand-home"
-            className="flex items-center gap-2.5 text-left"
-          >
-            <span className="grid h-9 w-9 place-items-center rounded-[11px] bg-sidebar-primary text-sidebar-primary-foreground shadow-sm">
-              <Leaf className="h-[18px] w-[18px]" strokeWidth={2.5} />
-            </span>
-            <span>
-              <span className="block font-serif text-[20px] leading-none tracking-tight text-sidebar-foreground">Morrow</span>
-              <span className="mt-1 block font-mono text-[8px] uppercase tracking-[0.21em] text-sidebar-foreground/55">study planner</span>
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            data-testid="button-close-sidebar"
-            aria-label="Close sidebar"
-            className="rounded-md p-1 text-sidebar-foreground/50 hover:bg-sidebar-accent hover:text-sidebar-foreground lg:hidden"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="mt-14">
-          <p className="mb-3 px-3 font-mono text-[9px] uppercase tracking-[0.19em] text-sidebar-foreground/45">Your space</p>
-          <nav className="space-y-1" aria-label="Planner sections">
-            {navItems.map(({ label, icon: Icon, target, active }) => (
-              <button
-                key={label}
-                type="button"
-                onClick={() => {
-                  document.getElementById(target)?.scrollIntoView({ behavior: 'smooth' });
-                  onClose();
-                }}
-                data-testid={`button-nav-${label.toLowerCase().replace(' ', '-')}`}
-                className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors ${
-                  active
-                    ? 'bg-sidebar-accent text-sidebar-foreground'
-                    : 'text-sidebar-foreground/58 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground'
-                }`}
-              >
-                <Icon className={`h-4 w-4 ${active ? 'text-sidebar-primary' : 'text-sidebar-foreground/55'}`} />
-                <span className="font-semibold">{label}</span>
-                {active ? <span className="ml-auto h-1.5 w-1.5 rounded-full bg-sidebar-primary" /> : null}
-              </button>
-            ))}
-          </nav>
-        </div>
-
-        <div className="mt-auto">
-          <div className="rounded-2xl border border-sidebar-border bg-sidebar-accent/60 p-4">
-            <div className="flex items-start justify-between">
-              <span className="grid h-8 w-8 place-items-center rounded-lg bg-sidebar-primary/15 text-sidebar-primary">
-                <Sparkles className="h-4 w-4" />
-              </span>
-              <span className="font-mono text-[9px] uppercase tracking-[0.15em] text-sidebar-foreground/45">coach</span>
-            </div>
-            <p className="mt-3 text-[13px] font-semibold leading-5 text-sidebar-foreground">A little structure goes a long way.</p>
-            <p className="mt-1 text-[11px] leading-4 text-sidebar-foreground/55">Turn the pile in your head into your next clear step.</p>
-            <button
-              type="button"
-              onClick={onPlan}
-              data-testid="button-sidebar-plan"
-              className="mt-4 flex w-full items-center justify-between rounded-lg bg-sidebar-primary px-3 py-2 text-xs font-extrabold text-sidebar-primary-foreground transition-transform hover:-translate-y-0.5"
-            >
-              Make a plan <ArrowRight className="h-3.5 w-3.5" />
-            </button>
-          </div>
-          <div className="mt-5 flex items-center gap-2 px-1 text-[10px] text-sidebar-foreground/40">
-            <LockKeyhole className="h-3 w-3" />
-            <span>Your plans stay yours</span>
-          </div>
-        </div>
-      </aside>
-    </>
-  );
-}
-
-function Topbar({ onMenu, healthOk }: { onMenu: () => void; healthOk: boolean }) {
-  return (
-    <header className="flex items-center justify-between border-b border-border/70 px-5 py-4 sm:px-8 lg:px-10">
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={onMenu}
-          aria-label="Open navigation"
-          data-testid="button-open-navigation"
-          className="rounded-lg p-2 text-muted-foreground hover:bg-muted lg:hidden"
-        >
-          <Menu className="h-5 w-5" />
-        </button>
-        <div className="hidden items-center gap-2 text-xs text-muted-foreground sm:flex">
-          <span className="h-1.5 w-1.5 rounded-full bg-secondary" />
-          <span>Small steps, steady progress</span>
-        </div>
-      </div>
-      <div className="flex items-center gap-3">
-        <div className="hidden items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-[10px] font-bold text-muted-foreground sm:flex">
-          <span className={`h-1.5 w-1.5 rounded-full ${healthOk ? 'bg-[#6DAF89]' : 'bg-accent'}`} />
-          {healthOk ? 'Planner ready' : 'Checking planner'}
-        </div>
-        <div className="grid h-8 w-8 place-items-center rounded-full bg-primary text-[11px] font-extrabold text-primary-foreground">AM</div>
-      </div>
-    </header>
   );
 }
 
@@ -589,7 +447,6 @@ function ErrorDashboard({ onRetry }: { onRetry: () => void }) {
 
 export default function Dashboard() {
   const queryClient = useQueryClient();
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
   const [generatedPlan, setGeneratedPlan] = useState<StudyPlan | null>(null);
   const [rescheduleId, setRescheduleId] = useState<number | null>(null);
@@ -638,49 +495,72 @@ export default function Dashboard() {
     });
   };
 
+  const shellProps = {
+    active: 'today' as const,
+    onPlan: () => setComposerOpen(true),
+    healthOk: Boolean(healthQuery.data),
+  };
+  const composer = (
+    <PlanComposer
+      open={composerOpen}
+      onClose={() => setComposerOpen(false)}
+      onCreated={(plan) => {
+        setGeneratedPlan(plan);
+        invalidateDashboard();
+      }}
+    />
+  );
+
   if (dashboardQuery.isLoading) {
     return (
-      <div className="app-shell flex min-h-[100dvh] bg-background">
-        <Sidebar mobileOpen={false} onClose={() => undefined} onPlan={() => setComposerOpen(true)} />
-        <main className="min-w-0 flex-1"><Topbar onMenu={() => setMobileOpen(true)} healthOk={false} /><div className="mx-auto max-w-[1260px] p-5 sm:p-8 lg:p-10"><LoadingDashboard /></div></main>
-        <PlanComposer open={composerOpen} onClose={() => setComposerOpen(false)} onCreated={setGeneratedPlan} />
-      </div>
+      <>
+        <AppShell {...shellProps}>
+          <LoadingDashboard />
+        </AppShell>
+        {composer}
+      </>
     );
   }
 
   if (dashboardQuery.isError || !dashboard) {
     return (
-      <div className="app-shell flex min-h-[100dvh] bg-background">
-        <Sidebar mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} onPlan={() => setComposerOpen(true)} />
-        <main className="min-w-0 flex-1"><Topbar onMenu={() => setMobileOpen(true)} healthOk={Boolean(healthQuery.data)} /><div className="mx-auto max-w-[1260px] p-5 sm:p-8 lg:p-10"><ErrorDashboard onRetry={() => dashboardQuery.refetch()} /></div></main>
-        <PlanComposer open={composerOpen} onClose={() => setComposerOpen(false)} onCreated={setGeneratedPlan} />
-      </div>
+      <>
+        <AppShell {...shellProps}>
+          <ErrorDashboard onRetry={() => dashboardQuery.refetch()} />
+        </AppShell>
+        {composer}
+      </>
     );
   }
 
   const todaySessions = dashboard.todaySessions ?? [];
   const assignments = dashboard.upcomingAssignments ?? [];
+  const hasPlans =
+    assignments.length > 0 ||
+    todaySessions.length > 0 ||
+    dashboard.completedSessions > 0 ||
+    dashboard.totalMinutesThisWeek > 0;
 
   return (
-    <div className="app-shell flex min-h-[100dvh] bg-background">
-      <Sidebar mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} onPlan={() => setComposerOpen(true)} />
-      <main className="min-w-0 flex-1">
-        <Topbar onMenu={() => setMobileOpen(true)} healthOk={Boolean(healthQuery.data)} />
-        <div className="mx-auto max-w-[1260px] p-5 sm:p-8 lg:p-10">
+    <>
+      <AppShell {...shellProps}>
           <div className="animate-rise mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
             <div>
               <p className="font-mono text-[10px] uppercase tracking-[0.19em] text-primary" data-testid="text-date-label">{dashboard.dateLabel}</p>
               <h1 className="mt-2 font-serif text-[42px] leading-[.95] tracking-tight text-foreground sm:text-[52px]" data-testid="text-greeting">{dashboard.greeting}</h1>
               <p className="mt-3 max-w-lg text-sm leading-6 text-muted-foreground">Let&apos;s make the next hour feel a little more possible.</p>
             </div>
-            <button
-              type="button"
-              onClick={() => setComposerOpen(true)}
-              data-testid="button-open-plan"
-              className="group inline-flex w-fit items-center gap-2 rounded-xl border border-primary bg-primary px-4 py-3 text-xs font-extrabold text-primary-foreground shadow-sm transition-transform hover:-translate-y-0.5"
-            >
-              <Plus className="h-4 w-4 transition-transform group-hover:rotate-90" /> Make a plan
-            </button>
+            <div className="flex w-fit flex-col items-start gap-2 sm:items-end">
+              <button
+                type="button"
+                onClick={() => setComposerOpen(true)}
+                data-testid="button-open-plan"
+                className="group inline-flex w-fit items-center gap-2 rounded-xl border border-primary bg-primary px-4 py-3 text-xs font-extrabold text-primary-foreground shadow-sm transition-transform hover:-translate-y-0.5"
+              >
+                <Plus className="h-4 w-4 transition-transform group-hover:rotate-90" /> Make a plan
+              </button>
+              {hasPlans ? <ClearPlannerButton /> : null}
+            </div>
           </div>
 
           <section id="today-section" className="animate-rise delay-1 scroll-mt-6">
@@ -774,9 +654,8 @@ export default function Dashboard() {
             <span>Morrow is here for the next right-sized step.</span>
             <span className="font-mono uppercase tracking-[0.13em]">Built for better tomorrows</span>
           </footer>
-        </div>
-      </main>
-      <PlanComposer open={composerOpen} onClose={() => setComposerOpen(false)} onCreated={(plan) => { setGeneratedPlan(plan); invalidateDashboard(); }} />
-    </div>
+      </AppShell>
+      {composer}
+    </>
   );
 }

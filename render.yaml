@@ -1,0 +1,65 @@
+# Deploy Morrow (API + web) on Render's free tier.
+#
+# Prerequisites:
+#   1. A Postgres database — create a free one at neon.tech, copy its
+#      connection string.
+#   2. Push this repo to GitHub.
+#
+# Then in Render: New → Blueprint → pick this repo. It creates both services.
+# After the first deploy, set the env vars marked `sync: false` in the Render
+# dashboard (at minimum DATABASE_URL), and create the tables once with:
+#
+#   DATABASE_URL="<neon-url>" pnpm --filter @workspace/db run push
+#
+# (run locally, or from the API service's Render Shell). Full walkthrough:
+# docs/DEPLOY.md
+#
+# Free-tier note: the API service sleeps after ~15 min idle; the first request
+# after that takes ~50s to wake it.
+
+services:
+  - type: web
+    name: morrow-api
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @workspace/api-server run build
+    startCommand: node artifacts/api-server/dist/index.mjs
+    healthCheckPath: /api/healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SESSION_TTL_DAYS
+        value: "30"
+      - key: DATABASE_URL
+        sync: false # paste your Neon connection string
+      - key: GEMINI_API_KEY
+        sync: false # optional — free key from aistudio.google.com/app/apikey
+      - key: GOOGLE_CLIENT_IDS
+        sync: false # optional — enables Google sign-in
+      - key: APPLE_CLIENT_IDS
+        sync: false # optional — enables Apple sign-in
+      - key: ADMIN_EMAILS
+        sync: false # optional — comma-separated admin emails
+
+  - type: web
+    name: morrow-web
+    runtime: static
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @workspace/study-planner run build
+    staticPublishPath: artifacts/study-planner/dist/public
+    envVars:
+      - key: BASE_PATH
+        value: /
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: morrow-api
+          property: host
+      - key: VITE_GOOGLE_CLIENT_ID
+        sync: false # optional — must match one of GOOGLE_CLIENT_IDS
+      - key: VITE_APPLE_CLIENT_ID
+        sync: false # optional — Apple Services ID
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

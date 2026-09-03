@@ -1,0 +1,12 @@
+kind = "mobile"
+title = "Morrow (iOS)"
+description = "Expo / React Native client for the Morrow study planner. Talks to the same API server as the web artifact."
+version = "1.0.0"
+id = "artifacts/mobile"
+
+[[services]]
+name = "expo"
+localPort = 8081
+
+[services.development]
+run = "pnpm --filter @workspace/mobile run dev"

@@ -18,6 +18,240 @@ export const HealthCheckResponse = zod.object({
 
 
 /**
+ * @summary Create an account with email and password
+ */
+export const registerBodyEmailMin = 3;
+
+export const registerBodyPasswordMin = 8;
+
+
+
+export const RegisterBody = zod.object({
+  "email": zod.string().min(registerBodyEmailMin),
+  "password": zod.string().min(registerBodyPasswordMin),
+  "displayName": zod.string().optional()
+})
+
+export const RegisterResponse = zod.object({
+  "token": zod.string(),
+  "user": zod.object({
+  "id": zod.number(),
+  "email": zod.string(),
+  "displayName": zod.union([zod.string(),zod.null()]),
+  "role": zod.enum(['user', 'admin'])
+})
+})
+
+
+/**
+ * @summary Sign in with email and password
+ */
+export const LoginBody = zod.object({
+  "email": zod.string(),
+  "password": zod.string()
+})
+
+export const LoginResponse = zod.object({
+  "token": zod.string(),
+  "user": zod.object({
+  "id": zod.number(),
+  "email": zod.string(),
+  "displayName": zod.union([zod.string(),zod.null()]),
+  "role": zod.enum(['user', 'admin'])
+})
+})
+
+
+/**
+ * @summary Sign in with an Apple identity token
+ */
+
+
+
+export const AuthAppleBody = zod.object({
+  "identityToken": zod.string().min(1)
+})
+
+export const AuthAppleResponse = zod.object({
+  "token": zod.string(),
+  "user": zod.object({
+  "id": zod.number(),
+  "email": zod.string(),
+  "displayName": zod.union([zod.string(),zod.null()]),
+  "role": zod.enum(['user', 'admin'])
+})
+})
+
+
+/**
+ * @summary Sign in with a Google ID token
+ */
+
+
+
+export const AuthGoogleBody = zod.object({
+  "idToken": zod.string().min(1)
+})
+
+export const AuthGoogleResponse = zod.object({
+  "token": zod.string(),
+  "user": zod.object({
+  "id": zod.number(),
+  "email": zod.string(),
+  "displayName": zod.union([zod.string(),zod.null()]),
+  "role": zod.enum(['user', 'admin'])
+})
+})
+
+
+/**
+ * @summary Get the signed-in user
+ */
+export const GetAuthSessionResponse = zod.object({
+  "id": zod.number(),
+  "email": zod.string(),
+  "displayName": zod.union([zod.string(),zod.null()]),
+  "role": zod.enum(['user', 'admin'])
+})
+
+
+/**
+ * @summary Revoke the current session
+ */
+export const LogoutResponse = zod.void()
+
+
+/**
+ * @summary Permanently delete the signed-in account and all its data
+ */
+export const DeleteAccountResponse = zod.void()
+
+
+/**
+ * @summary All reviews plus the average rating
+ */
+export const ListReviewsResponse = zod.object({
+  "average": zod.number(),
+  "count": zod.number(),
+  "reviews": zod.array(zod.object({
+  "id": zod.number(),
+  "rating": zod.number(),
+  "body": zod.union([zod.string(),zod.null()]),
+  "authorName": zod.union([zod.string(),zod.null()]),
+  "createdAt": zod.string(),
+  "mine": zod.boolean()
+})),
+  "myReview": zod.union([zod.object({
+  "id": zod.number(),
+  "rating": zod.number(),
+  "body": zod.union([zod.string(),zod.null()]),
+  "authorName": zod.union([zod.string(),zod.null()]),
+  "createdAt": zod.string(),
+  "mine": zod.boolean()
+}),zod.null()])
+})
+
+
+/**
+ * @summary Create or update the signed-in user's review
+ */
+export const upsertMyReviewBodyRatingMax = 5;
+
+export const upsertMyReviewBodyBodyMax = 2000;
+
+
+
+export const UpsertMyReviewBody = zod.object({
+  "rating": zod.number().min(1).max(upsertMyReviewBodyRatingMax),
+  "body": zod.string().max(upsertMyReviewBodyBodyMax).optional()
+})
+
+export const UpsertMyReviewResponse = zod.object({
+  "id": zod.number(),
+  "rating": zod.number(),
+  "body": zod.union([zod.string(),zod.null()]),
+  "authorName": zod.union([zod.string(),zod.null()]),
+  "createdAt": zod.string(),
+  "mine": zod.boolean()
+})
+
+
+/**
+ * @summary Remove the signed-in user's review
+ */
+export const DeleteMyReviewResponse = zod.void()
+
+
+/**
+ * @summary Delete any review (admin)
+ */
+export const DeleteReviewParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteReviewResponse = zod.void()
+
+
+/**
+ * @summary App-wide counts
+ */
+export const GetAdminStatsResponse = zod.object({
+  "userCount": zod.number(),
+  "adminCount": zod.number(),
+  "reviewCount": zod.number(),
+  "averageRating": zod.number(),
+  "assignmentCount": zod.number(),
+  "sessionCount": zod.number(),
+  "signupsLast7Days": zod.number()
+})
+
+
+/**
+ * @summary All user accounts
+ */
+export const ListAdminUsersResponse = zod.object({
+  "users": zod.array(zod.object({
+  "id": zod.number(),
+  "email": zod.string(),
+  "displayName": zod.union([zod.string(),zod.null()]),
+  "role": zod.enum(['user', 'admin']),
+  "createdAt": zod.string(),
+  "reviewCount": zod.number(),
+  "assignmentCount": zod.number()
+}))
+})
+
+
+/**
+ * @summary Permanently delete a user account and all its data
+ */
+export const DeleteUserParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteUserResponse = zod.void()
+
+
+/**
+ * @summary Promote or demote a user
+ */
+export const SetUserRoleParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const SetUserRoleBody = zod.object({
+  "role": zod.enum(['user', 'admin'])
+})
+
+export const SetUserRoleResponse = zod.object({
+  "id": zod.number(),
+  "email": zod.string(),
+  "displayName": zod.union([zod.string(),zod.null()]),
+  "role": zod.enum(['user', 'admin'])
+})
+
+
+/**
  * Returns today's focus, upcoming study sessions, deadlines, and workload summary.
  * @summary Get the current study dashboard
  */
@@ -120,6 +354,12 @@ export const CreateStudyPlanResponse = zod.object({
 })),
   "summary": zod.string()
 })
+
+
+/**
+ * @summary Delete all of the signed-in user's assignments, tasks, and sessions
+ */
+export const ClearPlannerResponse = zod.void()
 
 
 /**

@@ -1,0 +1,15 @@
+{
+  "extends": "expo/tsconfig.base",
+  "include": ["app/**/*", "src/**/*", "*.ts", "*.tsx", ".expo/types/**/*", "expo-env.d.ts"],
+  "exclude": ["node_modules"],
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "moduleResolution": "bundler",
+    "customConditions": ["workspace"],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "expo": {
+    "name": "Morrow",
+    "slug": "morrow-study-planner",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "morrow",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#EAF5F2"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.CHANGE-ME.morrow",
+      "buildNumber": "1",
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIViewControllerBasedStatusBarAppearance": true
+      }
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#EAF5F2",
+          "resizeMode": "contain"
+        }
+      ],
+      "expo-secure-store",
+      "expo-web-browser",
+      "expo-apple-authentication"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "apiBaseUrl": "https://CHANGE-ME.replit.app",
+      "googleIosClientId": "FILL-FROM-GOOGLE-CLOUD-CONSOLE.apps.googleusercontent.com",
+      "googleWebClientId": "FILL-FROM-GOOGLE-CLOUD-CONSOLE.apps.googleusercontent.com",
+      "eas": {
+        "projectId": "FILL-AFTER-eas-init"
+      }
+    }
+  }
+}

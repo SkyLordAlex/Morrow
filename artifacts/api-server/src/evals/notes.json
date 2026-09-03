@@ -1,0 +1,119 @@
+[
+  {
+    "name": "single test, relative weekday",
+    "today": "2026-01-05",
+    "minutesPerDay": 75,
+    "note": "chemistry test this friday",
+    "expect": {
+      "assignments": [
+        { "subject": "chemistry", "kind": ["test", "exam", "quiz"], "dueInDays": [3, 5] }
+      ]
+    }
+  },
+  {
+    "name": "three items, mixed relative dates",
+    "today": "2026-03-02",
+    "minutesPerDay": 90,
+    "note": "history research paper due in two weeks, math homework tonight, bio quiz next tuesday",
+    "expect": {
+      "assignments": [
+        { "subject": "history", "kind": ["paper", "essay", "project"], "dueInDays": [10, 16] },
+        { "subject": "math", "kind": ["homework", "assignment"], "dueInDays": [0, 2] },
+        { "subject": "biology", "kind": ["quiz", "test", "exam"], "dueInDays": [5, 9] }
+      ]
+    }
+  },
+  {
+    "name": "tomorrow",
+    "today": "2026-02-10",
+    "minutesPerDay": 60,
+    "note": "english essay draft due tomorrow",
+    "expect": {
+      "assignments": [
+        { "subject": "english", "kind": ["essay", "paper", "homework", "assignment"], "dueInDays": [0, 2] }
+      ]
+    }
+  },
+  {
+    "name": "next week phrasing",
+    "today": "2026-04-06",
+    "minutesPerDay": 90,
+    "note": "start the physics project, it's due next week",
+    "expect": {
+      "assignments": [
+        { "subject": "physics", "kind": ["project", "presentation", "assignment"], "dueInDays": [3, 10] }
+      ]
+    }
+  },
+  {
+    "name": "vague, no explicit date",
+    "today": "2026-05-04",
+    "minutesPerDay": 90,
+    "note": "need to study for my psychology exam",
+    "expect": {
+      "assignments": [
+        { "subject": "psychology", "kind": ["exam", "test", "quiz"], "dueInDays": [0, 10] }
+      ]
+    }
+  },
+  {
+    "name": "longer list, casual phrasing",
+    "today": "2026-09-14",
+    "minutesPerDay": 100,
+    "note": "ok so i have a biology test on thursday, a math worksheet due friday, and i really need to start my english presentation for the following week",
+    "expect": {
+      "assignments": [
+        { "subject": "biology", "kind": ["test", "exam", "quiz"], "dueInDays": [2, 5] },
+        { "subject": "math", "kind": ["homework", "assignment"], "dueInDays": [3, 6] },
+        { "subject": "english", "kind": ["presentation", "project", "assignment"], "dueInDays": [7, 16] }
+      ]
+    }
+  },
+  {
+    "name": "explicit ISO date",
+    "today": "2026-10-01",
+    "minutesPerDay": 80,
+    "note": "chemistry lab report due 2026-10-08",
+    "expect": {
+      "assignments": [
+        { "subject": "chemistry", "kind": ["homework", "assignment", "paper"], "dueInDays": [6, 8] }
+      ]
+    }
+  },
+  {
+    "name": "availability: no weekends",
+    "today": "2026-01-05",
+    "minutesPerDay": 75,
+    "note": "chemistry test friday, and i can't study on weekends",
+    "expect": {
+      "assignments": [
+        { "subject": "chemistry", "kind": ["test", "exam", "quiz"], "dueInDays": [3, 5] }
+      ],
+      "blockedWeekdays": [0, 6]
+    }
+  },
+  {
+    "name": "availability: specific days busy",
+    "today": "2026-02-02",
+    "minutesPerDay": 90,
+    "note": "math homework due wednesday. i have practice tuesday and thursday",
+    "expect": {
+      "assignments": [
+        { "subject": "math", "kind": ["homework", "assignment"], "dueInDays": [0, 3] }
+      ],
+      "blockedWeekdays": [2, 4]
+    }
+  },
+  {
+    "name": "availability: none mentioned",
+    "today": "2026-02-02",
+    "minutesPerDay": 90,
+    "note": "history essay due friday",
+    "expect": {
+      "assignments": [
+        { "subject": "history", "kind": ["essay", "paper", "homework", "assignment"], "dueInDays": [4, 4] }
+      ],
+      "blockedWeekdays": []
+    }
+  }
+]

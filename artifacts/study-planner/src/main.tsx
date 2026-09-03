@@ -1,5 +1,6 @@
 import { createRoot } from 'react-dom/client';
 
+import './api-config'; // must run before any API call
 import App from './App';
 import { ErrorBoundary } from '@/components/error-boundary';
 

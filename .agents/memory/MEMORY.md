@@ -1,1 +1,2 @@
 - [OpenAPI numeric schemas](openapi-zod-compatibility.md) — In this workspace, integer schemas generate z.int while the API validator is Zod 3; use number unless the validator is upgraded.
+- [Auth architecture](auth-architecture.md) — Bearer sessions in Postgres, scrypt passwords, jose for Apple/Google; all /planner/* routes are per-user. See docs/AUTH.md.
