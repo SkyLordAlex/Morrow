@@ -1,5 +1,15 @@
 # Changes from the original upload
 
+## Spread work across the available days (this pass)
+
+The scheduler no longer front-loads. For each assignment it builds the window
+of usable days (today → due date, minus busy weekdays) and aims for
+`ceil(taskCount / windowDays)` tasks per day — so a project due in three weeks
+gets ~one short session a day, while one due in two days packs to the budget.
+Start times now slot per-day (capped so a crammed day can't run past ~22:00).
+The AI prompt also nudges toward more, shorter tasks when a due date is over a
+week out. Verified locally (5 tasks → 5 days with runway, → 3 days when tight).
+
 ## Schedule around existing sessions (this pass)
 
 `POST /planner/plans` now seeds its per-day minute tally with the sessions the

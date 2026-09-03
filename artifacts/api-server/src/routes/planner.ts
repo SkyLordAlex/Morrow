@@ -53,8 +53,10 @@ const ACCENTS = ["coral", "blue", "violet", "green", "amber"];
 function startTimeFor(dateKeyValue: string, sessionNumber: number) {
   const day = weekdayOfKey(dateKeyValue);
   const base = day === 0 || day === 6 ? 10 : 16;
-  const hour = base + Math.floor((sessionNumber * 50) / 60);
-  const minute = (sessionNumber * 50) % 60;
+  // Cap at ~7 back-to-back slots so a crammed day never runs past midnight.
+  const offsetMinutes = Math.min(sessionNumber, 7) * 50;
+  const hour = base + Math.floor(offsetMinutes / 60);
+  const minute = offsetMinutes % 60;
   return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
 
@@ -270,12 +272,12 @@ router.post("/planner/plans", async (req, res, next) => {
     const assignments = [];
     const tasks = [];
     const sessions = [];
-    let sessionNumber = 0;
 
-    // Seed the day-by-day minute tally with what the student *already* has
-    // scheduled from today onward, so new sessions fill the emptier days
-    // instead of stacking onto ones that are already at capacity.
+    // Seed the day-by-day tallies with what the student *already* has scheduled
+    // from today onward, so new sessions fill the emptier days instead of
+    // stacking onto ones already at capacity.
     const dayUsage = new Map<string, number>();
+    const daySessionCount = new Map<string, number>();
     const existingSessions = await db
       .select({
         date: studySessionsTable.date,
@@ -294,6 +296,7 @@ router.post("/planner/plans", async (req, res, next) => {
         row.date,
         (dayUsage.get(row.date) ?? 0) + row.durationMinutes,
       );
+      daySessionCount.set(row.date, (daySessionCount.get(row.date) ?? 0) + 1);
     }
 
     for (const [assignmentIndex, item] of planned.entries()) {
@@ -320,6 +323,26 @@ router.post("/planner/plans", async (req, res, next) => {
         dueLabel: formatDueLabel(assignment.dueDate, todayKey),
       });
 
+      // The days between now and the due date the student can actually use
+      // (dropping the ones they said they're busy). Sessions get spread across
+      // these rather than front-loaded: with lots of runway that's ~1 task a
+      // day; when it's tight, more per day.
+      const windowDays: string[] = [];
+      for (
+        let day = todayKey;
+        day <= item.dueDate;
+        day = addDaysKey(day, 1)
+      ) {
+        if (!isBlockedDay(day)) windowDays.push(day);
+      }
+      if (windowDays.length === 0) windowDays.push(item.dueDate);
+      const targetPerDay = Math.max(
+        1,
+        Math.ceil(item.tasks.length / windowDays.length),
+      );
+      let dayCursor = 0;
+      let placedOnCursor = 0;
+
       for (const [taskIndex, plannedTask] of item.tasks.entries()) {
         const durationMinutes = plannedTask.durationMinutes;
         const [task] = await db
@@ -335,29 +358,27 @@ router.post("/planner/plans", async (req, res, next) => {
           .returning();
         tasks.push(task);
 
-        // Date keys compare correctly as strings (YYYY-MM-DD is
-        // lexicographically ordered), so the walk needs no Date objects.
-        // Skip days the student said they can't study, and days already at
-        // capacity — but never push past the due date.
-        let candidateDate = todayKey;
+        // Move to the next usable day once this one has hit the spread target
+        // or would go over the daily minute budget — but never past the last
+        // day in the window (the due date).
         while (
-          candidateDate < item.dueDate &&
-          (isBlockedDay(candidateDate) ||
-            (dayUsage.get(candidateDate) ?? 0) + durationMinutes >
+          dayCursor < windowDays.length - 1 &&
+          (placedOnCursor >= targetPerDay ||
+            (dayUsage.get(windowDays[dayCursor]) ?? 0) + durationMinutes >
               availableMinutes)
         ) {
-          candidateDate = addDaysKey(candidateDate, 1);
+          dayCursor += 1;
+          placedOnCursor = 0;
         }
-        if (candidateDate > item.dueDate) candidateDate = item.dueDate;
-        // If the due date itself is a day the student can't study, back up to
-        // the last day they can (never before today).
-        while (candidateDate > todayKey && isBlockedDay(candidateDate)) {
-          candidateDate = addDaysKey(candidateDate, -1);
-        }
-        const scheduledDate = candidateDate;
-        dayUsage.set(scheduledDate, (dayUsage.get(scheduledDate) ?? 0) + durationMinutes);
-        const startTime = startTimeFor(scheduledDate, sessionNumber % 3);
-        sessionNumber += 1;
+        const scheduledDate = windowDays[dayCursor];
+        placedOnCursor += 1;
+        dayUsage.set(
+          scheduledDate,
+          (dayUsage.get(scheduledDate) ?? 0) + durationMinutes,
+        );
+        const slot = daySessionCount.get(scheduledDate) ?? 0;
+        daySessionCount.set(scheduledDate, slot + 1);
+        const startTime = startTimeFor(scheduledDate, slot);
         const [session] = await db
           .insert(studySessionsTable)
           .values({
