@@ -1,6 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Check, Loader2, Monitor, Moon, Sun } from 'lucide-react';
+import {
+  Check,
+  Loader2,
+  Monitor,
+  Moon,
+  Sun,
+  Sunrise,
+  Sunset,
+} from 'lucide-react';
 import {
   getGetSettingsQueryKey,
   useGetSettings,
@@ -24,6 +32,19 @@ const THEME_OPTIONS: {
     icon: Monitor,
   },
   { value: 'dark', label: 'Dark', hint: 'Always the dark theme', icon: Moon },
+];
+
+type PreferredTime = 'morning' | 'afternoon' | 'evening';
+
+const STUDY_TIMES: {
+  value: PreferredTime;
+  label: string;
+  hint: string;
+  icon: typeof Sun;
+}[] = [
+  { value: 'morning', label: 'Morning', hint: 'from ~8 AM', icon: Sunrise },
+  { value: 'afternoon', label: 'Afternoon', hint: 'from ~1 PM', icon: Sun },
+  { value: 'evening', label: 'Evening', hint: 'from ~6 PM', icon: Sunset },
 ];
 
 // 0 = Sunday … 6 = Saturday, matching the server.
@@ -56,21 +77,28 @@ function PlanningSettings() {
 
   const [minutes, setMinutes] = useState('90');
   const [blocked, setBlocked] = useState<number[]>([]);
+  const [preferredTime, setPreferredTime] = useState<PreferredTime>('afternoon');
   const [savedAt, setSavedAt] = useState(0);
 
   useEffect(() => {
     if (!query.data) return;
     setMinutes(String(query.data.defaultAvailableMinutes));
     setBlocked(query.data.blockedWeekdays);
+    setPreferredTime(query.data.preferredTime);
   }, [query.data]);
 
-  const save = (next: { defaultAvailableMinutes?: number; blockedWeekdays?: number[] }) => {
+  const save = (next: {
+    defaultAvailableMinutes?: number;
+    blockedWeekdays?: number[];
+    preferredTime?: PreferredTime;
+  }) => {
     update.mutate(
       { data: next },
       {
         onSuccess: (result) => {
           setMinutes(String(result.defaultAvailableMinutes));
           setBlocked(result.blockedWeekdays);
+          setPreferredTime(result.preferredTime);
           setSavedAt(Date.now());
           queryClient.invalidateQueries({ queryKey: getGetSettingsQueryKey() });
         },
@@ -167,6 +195,56 @@ function PlanningSettings() {
                     }`}
                   >
                     {day.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <span className="block text-xs font-extrabold text-foreground">
+              When sessions start
+            </span>
+            <p className="mt-1 text-[11px] leading-4 text-muted-foreground">
+              Study sessions are scheduled from this time each day (a little
+              earlier on weekends).
+            </p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-3">
+              {STUDY_TIMES.map((option) => {
+                const selected = preferredTime === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => {
+                      setPreferredTime(option.value);
+                      save({ preferredTime: option.value });
+                    }}
+                    aria-pressed={selected}
+                    data-testid={`button-studytime-${option.value}`}
+                    className={`flex items-center gap-2.5 rounded-xl border p-3 text-left transition-colors ${
+                      selected
+                        ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                        : 'border-border hover:border-primary/40 hover:bg-muted/40'
+                    }`}
+                  >
+                    <span
+                      className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${
+                        selected
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground'
+                      }`}
+                    >
+                      <option.icon className="h-4 w-4" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-xs font-bold text-foreground">
+                        {option.label}
+                      </span>
+                      <span className="block text-[10px] text-muted-foreground">
+                        {option.hint}
+                      </span>
+                    </span>
                   </button>
                 );
               })}

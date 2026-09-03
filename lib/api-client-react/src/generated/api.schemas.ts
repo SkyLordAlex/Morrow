@@ -255,10 +255,29 @@ export interface SessionRescheduleInput {
   date: string;
 }
 
+export type UserSettingsPreferredTime = typeof UserSettingsPreferredTime[keyof typeof UserSettingsPreferredTime];
+
+
+export const UserSettingsPreferredTime = {
+  morning: 'morning',
+  afternoon: 'afternoon',
+  evening: 'evening',
+} as const;
+
 export interface UserSettings {
   defaultAvailableMinutes: number;
   blockedWeekdays: number[];
+  preferredTime: UserSettingsPreferredTime;
 }
+
+export type UserSettingsInputPreferredTime = typeof UserSettingsInputPreferredTime[keyof typeof UserSettingsInputPreferredTime];
+
+
+export const UserSettingsInputPreferredTime = {
+  morning: 'morning',
+  afternoon: 'afternoon',
+  evening: 'evening',
+} as const;
 
 export interface UserSettingsInput {
   /**
@@ -267,5 +286,6 @@ export interface UserSettingsInput {
      */
   defaultAvailableMinutes?: number;
   blockedWeekdays?: number[];
+  preferredTime?: UserSettingsInputPreferredTime;
 }
 

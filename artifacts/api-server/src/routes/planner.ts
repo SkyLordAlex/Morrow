@@ -35,7 +35,7 @@ import {
   isAiPlanningConfigured,
 } from "../lib/ai/plan.js";
 import { rulePlan } from "../lib/planner/rules.js";
-import { getUserSettings } from "../lib/settings.js";
+import { getUserSettings, START_HOUR } from "../lib/settings.js";
 import {
   describeBlockedWeekdays,
   type GeneratedPlan,
@@ -52,9 +52,14 @@ router.use(requireAuth);
 
 const ACCENTS = ["coral", "blue", "violet", "green", "amber"];
 
-function startTimeFor(dateKeyValue: string, sessionNumber: number) {
+function startTimeFor(
+  dateKeyValue: string,
+  sessionNumber: number,
+  baseHour: number,
+) {
   const day = weekdayOfKey(dateKeyValue);
-  const base = day === 0 || day === 6 ? 10 : 16;
+  // A little earlier on weekends, when there's usually more of the day free.
+  const base = day === 0 || day === 6 ? Math.max(8, baseHour - 3) : baseHour;
   // Cap at ~7 back-to-back slots so a crammed day never runs past midnight.
   const offsetMinutes = Math.min(sessionNumber, 7) * 50;
   const hour = base + Math.floor(offsetMinutes / 60);
@@ -401,7 +406,11 @@ router.post("/planner/plans", async (req, res, next) => {
         );
         const slot = daySessionCount.get(scheduledDate) ?? 0;
         daySessionCount.set(scheduledDate, slot + 1);
-        const startTime = startTimeFor(scheduledDate, slot);
+        const startTime = startTimeFor(
+          scheduledDate,
+          slot,
+          START_HOUR[settings.preferredTime],
+        );
         const [session] = await db
           .insert(studySessionsTable)
           .values({

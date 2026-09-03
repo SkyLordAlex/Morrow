@@ -256,7 +256,8 @@ export const SetUserRoleResponse = zod.object({
  */
 export const GetSettingsResponse = zod.object({
   "defaultAvailableMinutes": zod.number(),
-  "blockedWeekdays": zod.array(zod.number())
+  "blockedWeekdays": zod.array(zod.number()),
+  "preferredTime": zod.enum(['morning', 'afternoon', 'evening'])
 })
 
 
@@ -270,12 +271,14 @@ export const updateSettingsBodyDefaultAvailableMinutesMax = 480;
 
 export const UpdateSettingsBody = zod.object({
   "defaultAvailableMinutes": zod.number().min(updateSettingsBodyDefaultAvailableMinutesMin).max(updateSettingsBodyDefaultAvailableMinutesMax).optional(),
-  "blockedWeekdays": zod.array(zod.number()).optional()
+  "blockedWeekdays": zod.array(zod.number()).optional(),
+  "preferredTime": zod.enum(['morning', 'afternoon', 'evening']).optional()
 })
 
 export const UpdateSettingsResponse = zod.object({
   "defaultAvailableMinutes": zod.number(),
-  "blockedWeekdays": zod.array(zod.number())
+  "blockedWeekdays": zod.array(zod.number()),
+  "preferredTime": zod.enum(['morning', 'afternoon', 'evening'])
 })
 
 

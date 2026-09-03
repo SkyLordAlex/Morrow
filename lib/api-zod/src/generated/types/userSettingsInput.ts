@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { UserSettingsInputPreferredTime } from './userSettingsInputPreferredTime';
 
 export interface UserSettingsInput {
   /**
@@ -13,4 +14,5 @@ export interface UserSettingsInput {
      */
   defaultAvailableMinutes?: number;
   blockedWeekdays?: number[];
+  preferredTime?: UserSettingsInputPreferredTime;
 }

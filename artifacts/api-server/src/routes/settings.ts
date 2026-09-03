@@ -20,6 +20,7 @@ router.put("/settings", requireAuth, async (req, res, next) => {
     const settings = await saveUserSettings(currentUserId(req), {
       defaultAvailableMinutes: input.defaultAvailableMinutes,
       blockedWeekdays: input.blockedWeekdays,
+      preferredTime: input.preferredTime,
     });
     res.json(GetSettingsResponse.parse(settings));
   } catch (error) {

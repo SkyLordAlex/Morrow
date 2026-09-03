@@ -3,19 +3,36 @@ import { db, userSettingsTable } from "@workspace/db";
 import { sanitizeBlockedWeekdays } from "./planner/types.js";
 import { logger } from "./logger.js";
 
+export type PreferredTime = "morning" | "afternoon" | "evening";
+
 export type ResolvedSettings = {
   defaultAvailableMinutes: number;
   blockedWeekdays: number[];
+  preferredTime: PreferredTime;
 };
 
 export const DEFAULT_SETTINGS: ResolvedSettings = {
   defaultAvailableMinutes: 90,
   blockedWeekdays: [],
+  preferredTime: "afternoon",
+};
+
+// The clock hour study sessions start at for each preference.
+export const START_HOUR: Record<PreferredTime, number> = {
+  morning: 8,
+  afternoon: 13,
+  evening: 18,
 };
 
 function clampMinutes(value: number): number {
   if (!Number.isFinite(value)) return DEFAULT_SETTINGS.defaultAvailableMinutes;
   return Math.min(480, Math.max(15, Math.round(value)));
+}
+
+function coercePreferredTime(value: unknown): PreferredTime {
+  return value === "morning" || value === "afternoon" || value === "evening"
+    ? value
+    : DEFAULT_SETTINGS.preferredTime;
 }
 
 /** A user's settings, falling back to defaults when they've saved none. */
@@ -32,6 +49,7 @@ export async function getUserSettings(
     return {
       defaultAvailableMinutes: clampMinutes(row.defaultAvailableMinutes),
       blockedWeekdays: sanitizeBlockedWeekdays(row.blockedWeekdays),
+      preferredTime: coercePreferredTime(row.preferredTime),
     };
   } catch (error) {
     // The most likely cause is the `user_settings` table not existing yet
@@ -60,6 +78,10 @@ export async function saveUserSettings(
       patch.blockedWeekdays === undefined
         ? current.blockedWeekdays
         : sanitizeBlockedWeekdays(patch.blockedWeekdays),
+    preferredTime:
+      patch.preferredTime === undefined
+        ? current.preferredTime
+        : coercePreferredTime(patch.preferredTime),
   };
 
   await db

@@ -1,4 +1,4 @@
-import { integer, jsonb, pgTable, timestamp } from "drizzle-orm/pg-core";
+import { integer, jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { usersTable } from "./auth";
 
@@ -21,6 +21,9 @@ export const userSettingsTable = pgTable("user_settings", {
     .$type<number[]>()
     .notNull()
     .default([]),
+
+  // When study sessions start each day: "morning" | "afternoon" | "evening".
+  preferredTime: text("preferred_time").notNull().default("afternoon"),
 
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()

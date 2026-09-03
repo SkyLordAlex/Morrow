@@ -40,4 +40,6 @@ export * from './user';
 export * from './userRole';
 export * from './userSettings';
 export * from './userSettingsInput';
+export * from './userSettingsInputPreferredTime';
+export * from './userSettingsPreferredTime';
 export * from './workloadDay';

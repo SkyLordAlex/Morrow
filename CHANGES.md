@@ -1,5 +1,12 @@
 # Changes from the original upload
 
+## Preferred study time (this pass)
+
+Settings → Planning → **When sessions start**: Morning (~8 AM), Afternoon
+(~1 PM), or Evening (~6 PM). The scheduler used to hardcode 4 PM on weekdays /
+10 AM on weekends; now it starts from the chosen time (still a few hours earlier
+on weekends). Stored on `user_settings.preferred_time` — **`db push` again**.
+
 ## Planning defaults in Settings (this pass)
 
 Settings → **Defaults for new plans**: set your usual "time I have each day"
