@@ -115,5 +115,49 @@
       ],
       "blockedWeekdays": []
     }
+  },
+  {
+    "name": "date: comma before the day",
+    "today": "2026-09-03",
+    "minutesPerDay": 90,
+    "note": "math test, saturday",
+    "expect": {
+      "assignments": [
+        { "subject": "math", "kind": ["test", "exam", "quiz"], "dueInDays": [2, 2] }
+      ]
+    }
+  },
+  {
+    "name": "date: named month and day",
+    "today": "2026-09-03",
+    "minutesPerDay": 90,
+    "note": "art project due sept 15",
+    "expect": {
+      "assignments": [
+        { "subject": "art", "kind": ["project", "presentation", "assignment"], "dueInDays": [12, 12] }
+      ]
+    }
+  },
+  {
+    "name": "date: day of the month",
+    "today": "2026-09-03",
+    "minutesPerDay": 90,
+    "note": "spanish quiz on the 10th",
+    "expect": {
+      "assignments": [
+        { "subject": "spanish", "kind": ["quiz", "test", "exam"], "dueInDays": [7, 7] }
+      ]
+    }
+  },
+  {
+    "name": "date: today",
+    "today": "2026-09-03",
+    "minutesPerDay": 90,
+    "note": "biology homework today",
+    "expect": {
+      "assignments": [
+        { "subject": "biology", "kind": ["homework", "assignment"], "dueInDays": [0, 0] }
+      ]
+    }
   }
 ]

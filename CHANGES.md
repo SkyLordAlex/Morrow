@@ -1,5 +1,25 @@
 # Changes from the original upload
 
+## Respect the dates in the note (this pass)
+
+Due dates the student wrote were being missed and replaced with a "3 days from
+now" default.
+
+- **"Math test, Saturday"** — the comma split the day off into its own fragment,
+  which was then dropped. Now a trailing date-only fragment ("saturday", "the
+  10th", "due friday") re-attaches to the assignment it came from.
+- **"due Sept 15" / "the 10th"** — named months and day-of-month numbers weren't
+  parsed at all. Now handled (rolling to next year / next month when the date
+  would otherwise be in the past).
+- **"tomorrow" abbreviations** ("tmrw", "tmr") now recognised.
+- Fewer phantom cards from scheduling notes: "I have practice Tuesday and
+  Thursday", "no studying on the weekend", "I have work due Friday" (that last
+  one is now correctly read as a deadline, not a day off).
+- The AI prompt got a firmer, explicit date-resolution spec (today / tomorrow /
+  bare weekday / "next week" / named dates).
+
+Eval grew to 146 checks, still 100%.
+
 ## Cleaner assignment titles from messy notes (this pass)
 
 The rule-based parser used to name a card with whatever text came before the

@@ -77,12 +77,46 @@ const NUMBER_WORDS: Record<string, number> = {
   seven: 7,
 };
 
+const MONTH_INDEX: Record<string, number> = {
+  jan: 0, january: 0, feb: 1, february: 1, mar: 2, march: 2, apr: 3, april: 3,
+  may: 4, jun: 5, june: 5, jul: 6, july: 6, aug: 7, august: 7, sep: 8, sept: 8,
+  september: 8, oct: 9, october: 9, nov: 10, november: 10, dec: 11, december: 11,
+};
+
+function ymd(year: number, monthIndex: number, day: number): string {
+  const m = ((monthIndex % 12) + 12) % 12;
+  const y = year + Math.floor(monthIndex / 12);
+  return `${y}-${String(m + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
 function parseDueDate(clause: string, todayKey: string) {
   const normalized = clause.toLowerCase();
 
   // Explicit ISO date wins.
   const iso = normalized.match(/\b(\d{4}-\d{2}-\d{2})\b/);
   if (iso) return iso[1];
+
+  // A named month + day: "September 15", "sept 15", "due Dec 3".
+  const monthDay = normalized.match(
+    /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?\s+(\d{1,2})(?:st|nd|rd|th)?\b/,
+  );
+  if (monthDay && MONTH_INDEX[monthDay[1]] !== undefined) {
+    const month = MONTH_INDEX[monthDay[1]];
+    const day = Math.min(31, Math.max(1, Number(monthDay[2])));
+    const year = Number(todayKey.slice(0, 4));
+    const thisYear = ymd(year, month, day);
+    return thisYear >= todayKey ? thisYear : ymd(year + 1, month, day);
+  }
+
+  // A day of the month on its own: "the 15th", "by the 3rd", "due 22nd".
+  const ordinal = normalized.match(/\b(?:the\s+|by\s+|on\s+|due\s+)?(\d{1,2})(?:st|nd|rd|th)\b/);
+  if (ordinal) {
+    const day = Math.min(31, Math.max(1, Number(ordinal[1])));
+    const year = Number(todayKey.slice(0, 4));
+    const month = Number(todayKey.slice(5, 7)) - 1;
+    const thisMonth = ymd(year, month, day);
+    return thisMonth >= todayKey ? thisMonth : ymd(year, month + 1, day);
+  }
 
   // "in 3 days" / "in two weeks".
   const relative = normalized.match(
@@ -113,7 +147,9 @@ function parseDueDate(clause: string, todayKey: string) {
     if (normalized.includes("next ") && daysAhead <= 6) daysAhead += 7;
     return addDaysKey(todayKey, daysAhead);
   }
-  if (normalized.includes("tomorrow")) return addDaysKey(todayKey, 1);
+  if (/\b(tomorrow|tmrw|tmr|tmw)\b/.test(normalized)) {
+    return addDaysKey(todayKey, 1);
+  }
   if (normalized.includes("tonight") || normalized.includes("today")) {
     return todayKey;
   }
@@ -193,23 +229,55 @@ function isDayOnlyClause(clause: string): boolean {
   );
 }
 
+// A clause that is *only* a due date — "saturday", "the 10th", "due friday",
+// "sept 15", "next week". When the student writes "math test, saturday" the
+// comma splits the date off; it belongs to the assignment right before it.
+const DATE_ONLY_TOKEN =
+  /^(?:on|the|by|due|before|in|this|next|week|weekend|weekends|and|sun|mon|tue|tues|wed|weds|thu|thur|thurs|fri|sat|sunday|monday|tuesday|wednesday|thursday|friday|saturday|today|tonight|tomorrow|tmrw|tmr|tmw|jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec|january|february|march|april|june|july|august|september|october|november|december|\d{1,4}(?:st|nd|rd|th)?)$/;
+
+function isDateOnlyClause(clause: string): boolean {
+  const tokens = clause.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+  if (tokens.length === 0) return false;
+  const namesADay = tokens.some(
+    (t) =>
+      /^(sun|mon|tue|wed|thu|fri|sat|today|tonight|tomorrow|tmrw|tmr|tmw|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/.test(
+        t,
+      ) ||
+      /^\d{1,4}(?:st|nd|rd|th)$/.test(t) ||
+      t === "week" ||
+      t === "weekend" ||
+      t === "weekends",
+  );
+  return namesADay && tokens.every((t) => DATE_ONLY_TOKEN.test(t));
+}
+
 function isAvailabilityClause(clause: string): boolean {
   const c = clause.toLowerCase().trim();
-  if (KIND_WORD.test(c)) return false;
+  // "due" or an assignment kind means it's schoolwork, not a scheduling note.
+  if (KIND_WORD.test(c) || /\bdue\b/.test(c)) return false;
 
   // A clause that is just day names — the tail of a "practice tuesday and
   // thursday" that the "and"-split cut off.
   if (isDayOnlyClause(c)) return true;
 
+  const namesADay =
+    /\b(weekends?|sun(?:day)?s?|mon(?:day)?s?|tue(?:s(?:day)?)?s?|wed(?:nesday)?s?|thu(?:rs(?:day)?)?s?|fri(?:day)?s?|sat(?:urday)?s?)\b/.test(
+      c,
+    );
+
+  // A standing commitment on a named day ("practice tuesday and thursday",
+  // "i have a game saturday", "work shift friday").
+  const hasCommitment =
+    /\b(practices?|rehearsals?|scrimmages?|games?|matches?|meets?|shifts?|work|job|lessons?|clubs?|tournaments?|camp|appointments?|band|choir|orchestra|recital|tryouts?)\b/.test(
+      c,
+    );
+  if (hasCommitment && namesADay) return true;
+
   const negatesStudy =
-    /\b(can'?t|cannot|can not|won'?t|will not|unable to|not (?:free|available|able)|busy|no time|have (?:practice|work|a shift|games?|rehearsal)|only|just)\b/.test(
+    /\b(can'?t|cannot|can not|won'?t|will not|unable to|not (?:free|available|able)|busy|no (?:time|study|studying|school|class|homework|work)|have (?:practice|work|a shift|games?|rehearsal)|only|just)\b/.test(
       c,
     );
-  const namesDayOrStudy =
-    /\b(study|studying|weekends?|sun(?:day)?s?|mon(?:day)?s?|tue(?:s(?:day)?)?s?|wed(?:nesday)?s?|thu(?:rs(?:day)?)?s?|fri(?:day)?s?|sat(?:urday)?s?)\b/.test(
-      c,
-    );
-  return negatesStudy && namesDayOrStudy;
+  return negatesStudy && (namesADay || /\b(study|studying)\b/.test(c));
 }
 
 // "I want to practice math", "gotta study for the bio quiz" — filler the
@@ -277,13 +345,24 @@ export function parseAssignments(
   note: string,
   todayKey: string,
 ): ParsedAssignment[] {
-  const clauses = note
+  const rawClauses = note
     .replace(/^\s*i\s+have\s+/i, "")
     .replace(/,\s+and\s+/gi, ", ")
     .split(/\s*,\s*|\s+\band\b\s+/i)
     .map((part) => part.trim())
-    .filter(Boolean)
-    .filter((clause) => !isAvailabilityClause(clause));
+    .filter(Boolean);
+
+  // Re-attach a trailing date-only fragment to the assignment it came from:
+  // "math test, saturday" was split into ["math test", "saturday"].
+  const joined: string[] = [];
+  for (const clause of rawClauses) {
+    if (joined.length > 0 && isDateOnlyClause(clause)) {
+      joined[joined.length - 1] += ` ${clause}`;
+    } else {
+      joined.push(clause);
+    }
+  }
+  const clauses = joined.filter((clause) => !isAvailabilityClause(clause));
 
   return clauses.map((clause, index) => {
     const normalized = clause.replace(/^(a|an|the)\s+/i, "").trim();
@@ -365,8 +444,10 @@ export function detectBlockedWeekdays(note: string): number[] {
   for (const match of text.matchAll(UNAVAILABLE)) {
     const window = text
       .slice(match.index)
-      .split(/[.!?;\n]/)[0]
+      .split(/[.!?;,\n]/)[0]
       .slice(0, 42);
+    // "...work due friday" is a deadline, not a day off.
+    if (/\bdue\b/.test(window)) continue;
     for (const day of weekdaysIn(window)) blocked.add(day);
   }
   return sanitizeBlockedWeekdays([...blocked]);
