@@ -159,5 +159,29 @@
         { "subject": "biology", "kind": ["homework", "assignment"], "dueInDays": [0, 0] }
       ]
     }
+  },
+  {
+    "name": "availability: don't have time on a day",
+    "today": "2026-09-03",
+    "minutesPerDay": 90,
+    "note": "math test on monday, dont have time on sunday",
+    "expect": {
+      "assignments": [
+        { "subject": "math", "kind": ["test", "exam", "quiz"], "dueInDays": [4, 4] }
+      ],
+      "blockedWeekdays": [0]
+    }
+  },
+  {
+    "name": "availability: swamped this weekend",
+    "today": "2026-09-03",
+    "minutesPerDay": 90,
+    "note": "history essay due friday, swamped this weekend",
+    "expect": {
+      "assignments": [
+        { "subject": "history", "kind": ["essay", "paper", "homework", "assignment"], "dueInDays": [1, 1] }
+      ],
+      "blockedWeekdays": [0, 6]
+    }
   }
 ]

@@ -125,9 +125,12 @@ const SYSTEM_INSTRUCTION = [
   "  or two out, fewer, larger tasks are fine.",
   "- Keep each assignment's total task time modest relative to the student's daily budget.",
   "- blockedWeekdays: if the student says which days they can or cannot study",
-  "  (\"no weekends\", \"I'm busy Tuesdays and Thursdays\", \"only Monday Wednesday Friday\"),",
+  "  (\"no weekends\", \"I'm busy Tuesdays and Thursdays\", \"don't have time on Sunday\",",
+  "  \"swamped this weekend\", \"I have practice Mon and Wed\", \"only Monday Wednesday Friday\"),",
   "  list the weekday numbers they CANNOT study — 0=Sunday, 1=Monday, … 6=Saturday.",
-  "  \"only Mon/Wed/Fri\" means the other four days are blocked. Leave it [] if not mentioned.",
+  "  \"only Mon/Wed/Fri\" means the other four days are blocked. A day named this way is",
+  "  availability, NOT schoolwork — never turn \"don't have time on Sunday\" into an",
+  "  assignment or a task. Leave blockedWeekdays [] if the note doesn't mention days off.",
 ].join("\n");
 
 // Few-shot examples. Each is a self-contained (note -> JSON) pair the model
@@ -173,9 +176,9 @@ const FEW_SHOT: {
     note: [
       "Today is 2026-03-02 (Monday). I have about 90 minutes a day.",
       "history research paper due in two weeks and a bio quiz next tuesday.",
-      "i can't study on weekends",
+      "i can't study on weekends and i don't have time on fridays",
     ].join("\n"),
-    blockedWeekdays: [0, 6],
+    blockedWeekdays: [0, 5, 6],
     assignments: [
       {
         title: "History research paper",

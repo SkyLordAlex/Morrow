@@ -251,6 +251,11 @@ function isDateOnlyClause(clause: string): boolean {
   return namesADay && tokens.every((t) => DATE_ONLY_TOKEN.test(t));
 }
 
+// Phrases that mean "I'm not studying then". Apostrophes are optional so
+// "dont", "cant", "wont" match as well as "don't", "can't", "won't".
+const UNAVAILABLE_PHRASE =
+  /\b(?:ca(?:n'?t|nnot)|can not|wo(?:n'?t)|will not|do(?:n'?t)\s+(?:have|got)|does(?:n'?t)\s+have|have\s?n'?t\s+got|unable to|not\s+(?:free|available|able|around)|no\s+(?:time|study|studying|school|class|homework|work|free\s+time)|not\s+enough\s+time|short\s+on\s+time|out\s+of\s+time|busy|tied\s+up|swamped|slammed|booked|occupied|full\s+day|day\s+off|off\b|away|skip|avoid|have\s+(?:practice|work|a\s+shift|games?|rehearsal|plans))/;
+
 function isAvailabilityClause(clause: string): boolean {
   const c = clause.toLowerCase().trim();
   // "due" or an assignment kind means it's schoolwork, not a scheduling note.
@@ -273,10 +278,7 @@ function isAvailabilityClause(clause: string): boolean {
     );
   if (hasCommitment && namesADay) return true;
 
-  const negatesStudy =
-    /\b(can'?t|cannot|can not|won'?t|will not|unable to|not (?:free|available|able)|busy|no (?:time|study|studying|school|class|homework|work)|have (?:practice|work|a shift|games?|rehearsal)|only|just)\b/.test(
-      c,
-    );
+  const negatesStudy = UNAVAILABLE_PHRASE.test(c) || /\b(only|just)\b/.test(c);
   return negatesStudy && (namesADay || /\b(study|studying)\b/.test(c));
 }
 
@@ -420,8 +422,7 @@ function weekdaysIn(text: string): number[] {
 
 // Words that signal "I'm not studying then". The AI path handles subtle
 // phrasing; this catches the common "<can't-word> ... <day>" shape.
-const UNAVAILABLE =
-  /\b(can'?t|cannot|can not|won'?t|will not|unable to|not (?:able|free|available)|no (?:study|studying|school|class|homework)|busy|have (?:practice|work|a shift|games?|rehearsal)|skip|avoid|off|away)\b/gi;
+const UNAVAILABLE = new RegExp(UNAVAILABLE_PHRASE.source, "gi");
 
 /** Best-effort blocked-weekday detection from a free-text note. */
 export function detectBlockedWeekdays(note: string): number[] {
