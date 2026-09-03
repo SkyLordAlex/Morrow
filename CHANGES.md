@@ -1,5 +1,22 @@
 # Changes from the original upload
 
+## Cleaner assignment titles from messy notes (this pass)
+
+The rule-based parser used to name a card with whatever text came before the
+due date — "I want to practice math on", "work on the science project". New
+`deriveTitle()` in `lib/planner/rules.ts` strips the filler a student wraps
+around a task ("I want to", "gotta", "need to", "work on", "study for", a
+leading "the/a"), then:
+
+- a real assignment kind → the tidy **"Subject kind"** form ("Math test",
+  "English essay", "Science project");
+- an activity verb + known subject → **"Subject activity"** ("Math practice",
+  "History reading", "Spanish review");
+- otherwise the cleaned phrase if it's short and sane, else "Subject work".
+
+Also widened the recognised subject list (science, spanish, french, german,
+economics, music). Eval still 114/114.
+
 ## Spread work across the available days (this pass)
 
 The scheduler no longer front-loads. For each assignment it builds the window

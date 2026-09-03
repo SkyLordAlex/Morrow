@@ -17,6 +17,12 @@ export const SUBJECTS = [
   "art",
   "geography",
   "psychology",
+  "science",
+  "spanish",
+  "french",
+  "german",
+  "economics",
+  "music",
 ];
 
 // Common shorthand → canonical subject.
@@ -149,7 +155,7 @@ export function taskBlueprint(
   }
   if (kind === "paper" || kind === "essay") {
     return [
-      [`Pick an ${s} essay topic`, 25],
+      [`Pick your ${s} essay topic`, 25],
       [`Gather ${s} essay evidence`, 40],
       [`Outline the ${s} essay`, 25],
       [`Draft the ${s} essay`, 45],
@@ -206,6 +212,67 @@ function isAvailabilityClause(clause: string): boolean {
   return negatesStudy && namesDayOrStudy;
 }
 
+// "I want to practice math", "gotta study for the bio quiz" — filler the
+// student wraps around the actual task.
+const TITLE_FILLER =
+  /^(?:i(?:'ve| ?have| ?want| ?need| ?gotta| ?got| ?should| ?must| ?am going| ?wanna| ?would like)?\s+(?:to|a|an|got to|going to|gotta)?\s*)+|^(?:need to|want to|have to|got to|going to|gonna|wanna|do my|finish my|work on|study for|prep for|prepare for|revise for|review)\s+/i;
+
+const ACTIVITY_NOUN: Record<string, string> = {
+  practice: "practice",
+  practise: "practice",
+  study: "review",
+  studying: "review",
+  review: "review",
+  reviewing: "review",
+  revise: "review",
+  revising: "review",
+  memorize: "review",
+  prep: "review",
+  prepare: "review",
+  read: "reading",
+  reading: "reading",
+  write: "writing",
+  writing: "writing",
+  outline: "writing",
+  draft: "writing",
+  finish: "work",
+  complete: "work",
+  do: "work",
+};
+
+/** A clean, short assignment title from one messy clause. */
+function deriveTitle(
+  phrase: string,
+  subject: string,
+  kind: string,
+  kindMatched: boolean,
+): string {
+  // A real assignment kind ("test", "essay", …) → the tidy "Subject kind" form.
+  if (kindMatched && subject) return `${subject} ${kind}`;
+
+  // An activity verb ("practice", "read", …) + a known subject → "Subject verb".
+  if (subject) {
+    for (const word of phrase.toLowerCase().split(/[^a-z]+/)) {
+      const noun = ACTIVITY_NOUN[word];
+      if (noun) return `${subject} ${noun}`;
+    }
+  }
+
+  const cleaned = phrase
+    .replace(TITLE_FILLER, "")
+    .replace(/^(?:the|a|an)\s+/i, "")
+    .replace(/\s+(?:on|for|by|before|in|at|to|and|with|this|next|my)$/i, "")
+    .trim()
+    .replace(/[.!?,;]+$/, "")
+    .trim();
+
+  const wordCount = cleaned.split(/\s+/).filter(Boolean).length;
+  if (cleaned.length >= 4 && wordCount <= 8 && /[a-z]/i.test(cleaned)) {
+    return capitalize(cleaned);
+  }
+  return subject ? `${subject} work` : "Study session";
+}
+
 export function parseAssignments(
   note: string,
   todayKey: string,
@@ -225,18 +292,23 @@ export function parseAssignments(
       /\b(test|exam|homework|project|paper|essay|quiz|presentation|assignment)\b/i,
     );
     const kind = (kindMatch?.[1] ?? "assignment").toLowerCase();
-    const subject = subjectMatch
-      ? capitalize(subjectMatch)
-      : capitalize(normalized.split(/\s+/)[0] ?? `Subject ${index + 1}`);
+    const matchedSubject = subjectMatch ? capitalize(subjectMatch) : "";
     const dueDate = parseDueDate(normalized, todayKey);
     const beforeDue = normalized
       .split(
-        /\bdue\b|\b(today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday|next week)\b/i,
+        /\bdue\b|\b(today|tonight|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday|next week)\b/i,
       )[0]
       .trim()
       .replace(/[.!?]+$/, "");
-    const fallbackTitle = `${subject} ${kind}`;
-    const title = beforeDue.length >= 4 ? capitalize(beforeDue) : fallbackTitle;
+    const title = deriveTitle(
+      beforeDue,
+      matchedSubject,
+      kind,
+      Boolean(kindMatch),
+    );
+    // Fall back to the first word of the derived title for the subject label.
+    const subject =
+      matchedSubject || capitalize(title.split(/\s+/)[0] || "Study");
 
     return {
       title,
