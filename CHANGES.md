@@ -1,5 +1,14 @@
 # Changes from the original upload
 
+## Schedule around existing sessions (this pass)
+
+`POST /planner/plans` now seeds its per-day minute tally with the sessions the
+student *already* has scheduled (status `scheduled`, today onward) before
+placing the new ones. So a second plan fills the emptier days instead of
+stacking onto ones already at the daily budget. Verified locally: after a plan
+fills Thu/Fri, a new plan skips them and lands on the next open days. Summary
+text updated ("working around your existing sessions").
+
 ## Availability: "I can't study on weekends" (this pass)
 
 The planner now respects days the student says they can't study.

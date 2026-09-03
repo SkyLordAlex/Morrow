@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, gte } from "drizzle-orm";
 import {
   CompleteStudySessionParams,
   CompleteStudySessionResponse,
@@ -270,8 +270,31 @@ router.post("/planner/plans", async (req, res, next) => {
     const assignments = [];
     const tasks = [];
     const sessions = [];
-    const dayUsage = new Map<string, number>();
     let sessionNumber = 0;
+
+    // Seed the day-by-day minute tally with what the student *already* has
+    // scheduled from today onward, so new sessions fill the emptier days
+    // instead of stacking onto ones that are already at capacity.
+    const dayUsage = new Map<string, number>();
+    const existingSessions = await db
+      .select({
+        date: studySessionsTable.date,
+        durationMinutes: studySessionsTable.durationMinutes,
+      })
+      .from(studySessionsTable)
+      .where(
+        and(
+          eq(studySessionsTable.userId, userId),
+          eq(studySessionsTable.status, "scheduled"),
+          gte(studySessionsTable.date, todayKey),
+        ),
+      );
+    for (const row of existingSessions) {
+      dayUsage.set(
+        row.date,
+        (dayUsage.get(row.date) ?? 0) + row.durationMinutes,
+      );
+    }
 
     for (const [assignmentIndex, item] of planned.entries()) {
       const totalMinutes = item.tasks.reduce(
@@ -357,11 +380,12 @@ router.post("/planner/plans", async (req, res, next) => {
       }
     }
 
+    const newDays = new Set(sessions.map((session) => session.date)).size;
     const avoiding = describeBlockedWeekdays(blockedWeekdays);
     const base =
       planSource === "ai"
-        ? `I read your note and broke it into ${tasks.length} steps across ${dayUsage.size} study days, keeping each day near ${availableMinutes} minutes`
-        : `I mapped ${tasks.length} small steps across ${dayUsage.size} study days, keeping each day under ${availableMinutes} minutes`;
+        ? `I read your note and broke it into ${tasks.length} steps across ${newDays} study days, working around what you already had planned and keeping each day near ${availableMinutes} minutes`
+        : `I mapped ${tasks.length} small steps across ${newDays} study days, working around your existing sessions and keeping each day under ${availableMinutes} minutes`;
     const summary = avoiding
       ? `${base}, and staying off ${avoiding}.`
       : `${base}.`;
