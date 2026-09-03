@@ -128,39 +128,39 @@ export function taskBlueprint(
   kind: string,
   subject: string,
 ): readonly (readonly [string, number])[] {
-  const s = subject.trim() || "the assignment";
+  const s = subject.trim() || "the work";
 
   if (kind === "test" || kind === "exam" || kind === "quiz") {
     return [
-      [`Re-read the ${s} material and mark what's shaky`, 35],
-      [`Make a one-page ${s} study sheet`, 30],
-      [`Practice recall questions for ${s}`, 35],
-      [`Do a timed ${s} self-quiz and fix the gaps`, 20],
+      [`Review your ${s} notes`, 35],
+      [`Make a ${s} study sheet`, 30],
+      [`Practice ${s} questions`, 35],
+      [`Take a ${s} practice quiz`, 20],
     ] as const;
   }
   if (kind === "project" || kind === "presentation") {
     return [
-      [`Decide on a direction for the ${s} project`, 30],
-      [`Gather sources and examples for ${s}`, 45],
-      [`Build an outline for the ${s} project`, 35],
-      [`Draft the main ${s} work`, 45],
-      [`Revise and polish the ${s} project`, 25],
+      [`Plan the ${s} project`, 30],
+      [`Research the ${s} project`, 45],
+      [`Outline the ${s} project`, 35],
+      [`Draft the ${s} project`, 45],
+      [`Polish the ${s} project`, 25],
     ] as const;
   }
   if (kind === "paper" || kind === "essay") {
     return [
-      [`Choose a topic and question for the ${s} essay`, 25],
-      [`Gather evidence for the ${s} essay`, 40],
+      [`Pick an ${s} essay topic`, 25],
+      [`Gather ${s} essay evidence`, 40],
       [`Outline the ${s} essay`, 25],
-      [`Draft the ${s} argument`, 45],
-      [`Edit the ${s} essay for clarity`, 25],
+      [`Draft the ${s} essay`, 45],
+      [`Edit the ${s} essay`, 25],
     ] as const;
   }
   return [
-    [`Read through the ${s} instructions`, 15],
-    [`Work through the first half of the ${s} work`, 25],
-    [`Finish the rest of the ${s} work`, 25],
-    [`Check your ${s} answers and submit`, 15],
+    [`Read the ${s} instructions`, 15],
+    [`Start the ${s} work`, 25],
+    [`Finish the ${s} work`, 25],
+    [`Check and submit the ${s} work`, 15],
   ] as const;
 }
 
