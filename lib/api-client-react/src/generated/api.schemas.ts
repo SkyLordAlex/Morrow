@@ -255,3 +255,17 @@ export interface SessionRescheduleInput {
   date: string;
 }
 
+export interface UserSettings {
+  defaultAvailableMinutes: number;
+  blockedWeekdays: number[];
+}
+
+export interface UserSettingsInput {
+  /**
+     * @minimum 15
+     * @maximum 480
+     */
+  defaultAvailableMinutes?: number;
+  blockedWeekdays?: number[];
+}
+

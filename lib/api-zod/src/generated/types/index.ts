@@ -38,4 +38,6 @@ export * from './taskUpdateStatus';
 export * from './todayFocus';
 export * from './user';
 export * from './userRole';
+export * from './userSettings';
+export * from './userSettingsInput';
 export * from './workloadDay';

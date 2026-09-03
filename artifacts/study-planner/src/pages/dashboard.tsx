@@ -16,10 +16,11 @@ import {
   TimerReset,
   X,
 } from 'lucide-react';
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   getGetPlannerDashboardQueryKey,
+  getGetSettingsQueryKey,
   getHealthCheckQueryKey,
   type Assignment,
   type PlannerDashboard,
@@ -29,6 +30,7 @@ import {
   useCompleteStudySession,
   useCreateStudyPlan,
   useGetPlannerDashboard,
+  useGetSettings,
   useHealthCheck,
   useRescheduleStudySession,
   useUpdatePlannerTask,
@@ -297,9 +299,20 @@ function PlanComposer({
   onCreated: (plan: StudyPlan) => void;
 }) {
   const createStudyPlan = useCreateStudyPlan();
+  const settings = useGetSettings({
+    query: { queryKey: getGetSettingsQueryKey() },
+  });
   const [note, setNote] = useState('');
   const [availableMinutes, setAvailableMinutes] = useState('90');
+  const [minutesTouched, setMinutesTouched] = useState(false);
   const error = createStudyPlan.isError;
+
+  // Seed the field from the user's saved default until they edit it.
+  useEffect(() => {
+    if (!minutesTouched && settings.data) {
+      setAvailableMinutes(String(settings.data.defaultAvailableMinutes));
+    }
+  }, [settings.data, minutesTouched]);
 
   if (!open) return null;
 
@@ -360,7 +373,10 @@ function PlanComposer({
                   max={480}
                   step={15}
                   value={availableMinutes}
-                  onChange={(event) => setAvailableMinutes(event.target.value)}
+                  onChange={(event) => {
+                    setMinutesTouched(true);
+                    setAvailableMinutes(event.target.value);
+                  }}
                   data-testid="input-available-minutes"
                   className="w-[92px] rounded-xl border border-input bg-background px-3 py-2.5 font-mono text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
                 />

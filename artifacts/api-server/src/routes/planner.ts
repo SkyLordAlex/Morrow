@@ -35,6 +35,7 @@ import {
   isAiPlanningConfigured,
 } from "../lib/ai/plan.js";
 import { rulePlan } from "../lib/planner/rules.js";
+import { getUserSettings } from "../lib/settings.js";
 import {
   describeBlockedWeekdays,
   type GeneratedPlan,
@@ -255,7 +256,9 @@ router.post("/planner/plans", async (req, res, next) => {
     const input = CreateStudyPlanBody.parse(req.body);
     const timeZone = resolveTimeZone(req.get("x-time-zone"));
     const todayKey = zonedDateKey(timeZone);
-    const availableMinutes = input.availableMinutesPerDay ?? 90;
+    const settings = await getUserSettings(userId);
+    const availableMinutes =
+      input.availableMinutesPerDay ?? settings.defaultAvailableMinutes;
 
     // Real AI when a Gemini key is configured; the rule-based parser otherwise
     // or if the model call fails.
@@ -281,7 +284,11 @@ router.post("/planner/plans", async (req, res, next) => {
     }
 
     const planned: PlannedAssignment[] = plan.assignments;
-    const blockedWeekdays = plan.blockedWeekdays;
+    // The note's own "no weekends" etc. plus the days the user always blocks
+    // in Settings.
+    const blockedWeekdays = [
+      ...new Set([...plan.blockedWeekdays, ...settings.blockedWeekdays]),
+    ].sort((a, b) => a - b);
     const isBlockedDay = (dateKey: string) =>
       blockedWeekdays.includes(weekdayOfKey(dateKey));
 

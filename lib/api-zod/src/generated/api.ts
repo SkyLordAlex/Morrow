@@ -252,6 +252,34 @@ export const SetUserRoleResponse = zod.object({
 
 
 /**
+ * @summary The signed-in user's preferences
+ */
+export const GetSettingsResponse = zod.object({
+  "defaultAvailableMinutes": zod.number(),
+  "blockedWeekdays": zod.array(zod.number())
+})
+
+
+/**
+ * @summary Update the signed-in user's preferences
+ */
+export const updateSettingsBodyDefaultAvailableMinutesMin = 15;
+export const updateSettingsBodyDefaultAvailableMinutesMax = 480;
+
+
+
+export const UpdateSettingsBody = zod.object({
+  "defaultAvailableMinutes": zod.number().min(updateSettingsBodyDefaultAvailableMinutesMin).max(updateSettingsBodyDefaultAvailableMinutesMax).optional(),
+  "blockedWeekdays": zod.array(zod.number()).optional()
+})
+
+export const UpdateSettingsResponse = zod.object({
+  "defaultAvailableMinutes": zod.number(),
+  "blockedWeekdays": zod.array(zod.number())
+})
+
+
+/**
  * Returns today's focus, upcoming study sessions, deadlines, and workload summary.
  * @summary Get the current study dashboard
  */

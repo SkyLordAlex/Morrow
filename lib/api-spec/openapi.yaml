@@ -18,6 +18,8 @@ tags:
     description: Admin-only operations
   - name: planner
     description: Study planning operations
+  - name: settings
+    description: Per-user preferences
 paths:
   /healthz:
     get:
@@ -373,6 +375,53 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /settings:
+    get:
+      operationId: getSettings
+      tags: [settings]
+      summary: The signed-in user's preferences
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserSettings"
+        "401":
+          description: Not signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateSettings
+      tags: [settings]
+      summary: Update the signed-in user's preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserSettingsInput"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserSettings"
+        "400":
+          description: Invalid settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not signed in
           content:
             application/json:
               schema:
@@ -902,4 +951,25 @@ components:
           type: string
           format: date
       required: [date]
+    UserSettings:
+      type: object
+      properties:
+        defaultAvailableMinutes:
+          type: number
+        blockedWeekdays:
+          type: array
+          items:
+            type: number
+      required: [defaultAvailableMinutes, blockedWeekdays]
+    UserSettingsInput:
+      type: object
+      properties:
+        defaultAvailableMinutes:
+          type: number
+          minimum: 15
+          maximum: 480
+        blockedWeekdays:
+          type: array
+          items:
+            type: number
 

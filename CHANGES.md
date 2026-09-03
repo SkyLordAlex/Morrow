@@ -1,5 +1,18 @@
 # Changes from the original upload
 
+## Planning defaults in Settings (this pass)
+
+Settings → **Defaults for new plans**: set your usual "time I have each day"
+and the weekdays you never study, once, instead of re-entering them every plan.
+
+- New `user_settings` table (1 row per user, cascade-deleted with the account)
+  and `GET` / `PUT /settings`. **Run `pnpm --filter @workspace/db run push`
+  against the deployed database after pulling this** — the API falls back to
+  defaults if the table is missing, so plan creation won't break in the gap.
+- `POST /planner/plans` now uses the saved minutes when the request doesn't
+  specify one, and unions the saved days-off with anything the note mentions.
+- The plan composer's "time each day" field starts from the saved default.
+
 ## Settings page with light / dark / system theme (this pass)
 
 New **Settings** page (`/settings`, in the sidebar and the account menu). The

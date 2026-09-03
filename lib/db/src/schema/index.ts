@@ -20,3 +20,4 @@
 export * from "./auth";
 export * from "./planner";
 export * from "./reviews";
+export * from "./settings";
