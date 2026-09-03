@@ -19,6 +19,7 @@ import { AppShell } from '@/components/app-shell';
 import { useAuth } from '@/auth/auth-context';
 import { useTheme, type ThemeMode } from '@/theme/theme-context';
 import { useWeekStart } from '@/lib/week-start';
+import { allTimeZones, detectedTimeZone, useTimeZone } from '@/lib/timezone';
 
 const THEME_OPTIONS: {
   value: ThemeMode;
@@ -557,6 +558,48 @@ function CalendarSettings() {
   );
 }
 
+function TimeZoneSettings() {
+  const queryClient = useQueryClient();
+  const [zone, setZone] = useTimeZone();
+  const detected = detectedTimeZone();
+  const zones = allTimeZones();
+
+  const change = (value: string) => {
+    setZone(value === 'auto' ? null : value);
+    // "Today" and the schedule depend on the zone — refetch everything.
+    queryClient.invalidateQueries();
+  };
+
+  return (
+    <section
+      className="rounded-2xl border border-border/80 bg-card p-5 shadow-sm sm:p-6"
+      data-testid="section-timezone"
+    >
+      <p className="font-mono text-[10px] uppercase tracking-[0.17em] text-muted-foreground">
+        Time zone
+      </p>
+      <h2 className="mt-1 font-serif text-[24px]">Your day</h2>
+      <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
+        Which zone decides when “today” rolls over and when sessions are
+        scheduled.
+      </p>
+      <select
+        value={zone ?? 'auto'}
+        onChange={(event) => change(event.target.value)}
+        data-testid="select-timezone"
+        className="mt-4 w-full max-w-sm rounded-xl border border-input bg-background px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
+      >
+        <option value="auto">Auto — follow this device ({detected})</option>
+        {zones.map((tz) => (
+          <option key={tz} value={tz}>
+            {tz.replace(/_/g, ' ')}
+          </option>
+        ))}
+      </select>
+    </section>
+  );
+}
+
 export default function Settings() {
   const { user } = useAuth();
   const { mode, resolved, setMode } = useTheme();
@@ -628,6 +671,8 @@ export default function Settings() {
         <PlanningSettings />
 
         <CalendarSettings />
+
+        <TimeZoneSettings />
 
         {user ? <AccountSettings /> : null}
       </div>

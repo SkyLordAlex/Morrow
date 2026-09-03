@@ -1,4 +1,9 @@
 import { setBaseUrl } from '@workspace/api-client-react';
+import { applyTimeZone } from '@/lib/timezone';
+
+// Pin the API's time zone to the user's saved choice (no-op when they follow
+// the device). Must run before the first request.
+applyTimeZone();
 
 // In production the web app and the API are on different origins, so point the
 // generated client at the API. `VITE_API_URL` is baked in at build time — set

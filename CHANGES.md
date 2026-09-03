@@ -1,5 +1,13 @@
 # Changes from the original upload
 
+## Time-zone override (this pass)
+
+Settings → Time zone: follow the device (default) or pin a specific IANA zone.
+It sets the `x-time-zone` header the API already reads, so "today", the
+greeting, and scheduling all move with it. Per-device (`morrow.timeZone` in
+localStorage); `setTimeZone` is now re-exported from `@workspace/api-client-react`
+and applied in `api-config.ts` before the first request. No schema change.
+
 ## Change password + show sign-in methods (this pass)
 
 Settings → Account:
