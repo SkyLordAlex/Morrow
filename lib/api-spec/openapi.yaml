@@ -154,6 +154,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /auth/password:
+    post:
+      operationId: changePassword
+      tags: [auth]
+      summary: Set or change the signed-in user's password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordInput"
+      responses:
+        "204":
+          description: Password updated
+        "400":
+          description: Rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /auth/logout:
     post:
       operationId: logout
@@ -637,7 +663,14 @@ components:
         role:
           type: string
           enum: [user, admin]
-      required: [id, email, displayName, role]
+        hasPassword:
+          type: boolean
+        providers:
+          type: array
+          items:
+            type: string
+            enum: [apple, google]
+      required: [id, email, displayName, role, hasPassword, providers]
     AdminStats:
       type: object
       properties:
@@ -741,6 +774,15 @@ components:
           type: string
           maxLength: 80
       required: [displayName]
+    ChangePasswordInput:
+      type: object
+      properties:
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+          minLength: 8
+      required: [newPassword]
     AppleAuthInput:
       type: object
       properties:

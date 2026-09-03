@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import {
   getGetSettingsQueryKey,
+  useChangePassword,
   useGetSettings,
   useUpdateSettings,
 } from '@workspace/api-client-react';
@@ -342,6 +343,24 @@ function AccountSettings() {
             {user.email}
           </dd>
         </div>
+        <div className="flex items-center justify-between gap-4">
+          <dt className="text-muted-foreground">Sign in with</dt>
+          <dd className="flex flex-wrap justify-end gap-1.5">
+            {user.hasPassword ? (
+              <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-bold text-foreground">
+                Password
+              </span>
+            ) : null}
+            {user.providers.map((provider) => (
+              <span
+                key={provider}
+                className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-bold capitalize text-foreground"
+              >
+                {provider}
+              </span>
+            ))}
+          </dd>
+        </div>
         {user.role === 'admin' ? (
           <div className="flex items-center justify-between gap-4">
             <dt className="text-muted-foreground">Role</dt>
@@ -349,10 +368,148 @@ function AccountSettings() {
           </div>
         ) : null}
       </dl>
+
+      <PasswordForm hasPassword={user.hasPassword} />
+
       <p className="mt-4 text-[11px] leading-4 text-muted-foreground">
         Sign out or delete your account from the menu in the top-right.
       </p>
     </section>
+  );
+}
+
+function PasswordForm({ hasPassword }: { hasPassword: boolean }) {
+  const changePassword = useChangePassword();
+  const [open, setOpen] = useState(false);
+  const [current, setCurrent] = useState('');
+  const [next, setNext] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [message, setMessage] = useState<
+    { kind: 'ok' | 'error'; text: string } | null
+  >(null);
+
+  const reset = () => {
+    setCurrent('');
+    setNext('');
+    setConfirm('');
+    setMessage(null);
+  };
+
+  const submit = () => {
+    if (next.length < 8) {
+      setMessage({ kind: 'error', text: 'Use at least 8 characters.' });
+      return;
+    }
+    if (next !== confirm) {
+      setMessage({ kind: 'error', text: "The two passwords don't match." });
+      return;
+    }
+    changePassword.mutate(
+      {
+        data: {
+          newPassword: next,
+          ...(hasPassword ? { currentPassword: current } : {}),
+        },
+      },
+      {
+        onSuccess: () => {
+          reset();
+          setOpen(false);
+          setMessage({ kind: 'ok', text: 'Password updated.' });
+        },
+        onError: (error) => {
+          const text =
+            error instanceof Error && 'data' in error
+              ? ((error.data as { error?: string })?.error ??
+                'Could not update your password.')
+              : 'Could not update your password.';
+          setMessage({ kind: 'error', text });
+        },
+      },
+    );
+  };
+
+  return (
+    <div className="mt-5 border-t border-border/60 pt-4">
+      {!open ? (
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              reset();
+              setOpen(true);
+            }}
+            data-testid="button-open-password"
+            className="rounded-xl border border-border px-3.5 py-2.5 text-xs font-extrabold text-foreground hover:bg-muted"
+          >
+            {hasPassword ? 'Change password' : 'Set a password'}
+          </button>
+          {message?.kind === 'ok' ? (
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary">
+              <Check className="h-3.5 w-3.5" /> {message.text}
+            </span>
+          ) : null}
+        </div>
+      ) : (
+        <div className="max-w-xs space-y-2.5" data-testid="form-password">
+          {hasPassword ? (
+            <input
+              type="password"
+              value={current}
+              onChange={(event) => setCurrent(event.target.value)}
+              placeholder="Current password"
+              autoComplete="current-password"
+              data-testid="input-current-password"
+              className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
+            />
+          ) : null}
+          <input
+            type="password"
+            value={next}
+            onChange={(event) => setNext(event.target.value)}
+            placeholder="New password"
+            autoComplete="new-password"
+            data-testid="input-new-password"
+            className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
+          />
+          <input
+            type="password"
+            value={confirm}
+            onChange={(event) => setConfirm(event.target.value)}
+            placeholder="Confirm new password"
+            autoComplete="new-password"
+            data-testid="input-confirm-password"
+            className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
+          />
+          {message?.kind === 'error' ? (
+            <p className="text-[11px] font-semibold text-destructive">
+              {message.text}
+            </p>
+          ) : null}
+          <div className="flex items-center gap-2 pt-0.5">
+            <button
+              type="button"
+              onClick={submit}
+              disabled={changePassword.isPending}
+              data-testid="button-save-password"
+              className="rounded-xl bg-primary px-3.5 py-2.5 text-xs font-extrabold text-primary-foreground disabled:opacity-50"
+            >
+              {changePassword.isPending ? 'Saving…' : 'Save password'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                reset();
+                setOpen(false);
+              }}
+              className="rounded-xl px-3 py-2.5 text-xs font-bold text-muted-foreground hover:text-foreground"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

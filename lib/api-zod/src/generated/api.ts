@@ -38,7 +38,9 @@ export const RegisterResponse = zod.object({
   "id": zod.number(),
   "email": zod.string(),
   "displayName": zod.union([zod.string(),zod.null()]),
-  "role": zod.enum(['user', 'admin'])
+  "role": zod.enum(['user', 'admin']),
+  "hasPassword": zod.boolean(),
+  "providers": zod.array(zod.enum(['apple', 'google']))
 })
 })
 
@@ -57,7 +59,9 @@ export const LoginResponse = zod.object({
   "id": zod.number(),
   "email": zod.string(),
   "displayName": zod.union([zod.string(),zod.null()]),
-  "role": zod.enum(['user', 'admin'])
+  "role": zod.enum(['user', 'admin']),
+  "hasPassword": zod.boolean(),
+  "providers": zod.array(zod.enum(['apple', 'google']))
 })
 })
 
@@ -78,7 +82,9 @@ export const AuthAppleResponse = zod.object({
   "id": zod.number(),
   "email": zod.string(),
   "displayName": zod.union([zod.string(),zod.null()]),
-  "role": zod.enum(['user', 'admin'])
+  "role": zod.enum(['user', 'admin']),
+  "hasPassword": zod.boolean(),
+  "providers": zod.array(zod.enum(['apple', 'google']))
 })
 })
 
@@ -99,7 +105,9 @@ export const AuthGoogleResponse = zod.object({
   "id": zod.number(),
   "email": zod.string(),
   "displayName": zod.union([zod.string(),zod.null()]),
-  "role": zod.enum(['user', 'admin'])
+  "role": zod.enum(['user', 'admin']),
+  "hasPassword": zod.boolean(),
+  "providers": zod.array(zod.enum(['apple', 'google']))
 })
 })
 
@@ -111,8 +119,25 @@ export const GetAuthSessionResponse = zod.object({
   "id": zod.number(),
   "email": zod.string(),
   "displayName": zod.union([zod.string(),zod.null()]),
-  "role": zod.enum(['user', 'admin'])
+  "role": zod.enum(['user', 'admin']),
+  "hasPassword": zod.boolean(),
+  "providers": zod.array(zod.enum(['apple', 'google']))
 })
+
+
+/**
+ * @summary Set or change the signed-in user's password
+ */
+export const changePasswordBodyNewPasswordMin = 8;
+
+
+
+export const ChangePasswordBody = zod.object({
+  "currentPassword": zod.string().optional(),
+  "newPassword": zod.string().min(changePasswordBodyNewPasswordMin)
+})
+
+export const ChangePasswordResponse = zod.void()
 
 
 /**
@@ -136,7 +161,9 @@ export const UpdateAccountResponse = zod.object({
   "id": zod.number(),
   "email": zod.string(),
   "displayName": zod.union([zod.string(),zod.null()]),
-  "role": zod.enum(['user', 'admin'])
+  "role": zod.enum(['user', 'admin']),
+  "hasPassword": zod.boolean(),
+  "providers": zod.array(zod.enum(['apple', 'google']))
 })
 
 
@@ -266,7 +293,9 @@ export const SetUserRoleResponse = zod.object({
   "id": zod.number(),
   "email": zod.string(),
   "displayName": zod.union([zod.string(),zod.null()]),
-  "role": zod.enum(['user', 'admin'])
+  "role": zod.enum(['user', 'admin']),
+  "hasPassword": zod.boolean(),
+  "providers": zod.array(zod.enum(['apple', 'google']))
 })
 
 

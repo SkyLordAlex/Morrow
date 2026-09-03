@@ -15,14 +15,29 @@ export interface PublicUser {
   email: string;
   displayName: string | null;
   role: UserRole;
+  hasPassword: boolean;
+  providers: AuthProvider[];
 }
 
-export function toPublicUser(user: User): PublicUser {
+/** The client-facing user shape, including how the account can sign in. */
+export async function toPublicUser(user: User): Promise<PublicUser> {
+  const identities = await db
+    .select({ provider: identitiesTable.provider })
+    .from(identitiesTable)
+    .where(eq(identitiesTable.userId, user.id));
+
+  const providers = identities
+    .map((row) => row.provider)
+    .filter((p): p is AuthProvider => p === "apple" || p === "google")
+    .sort();
+
   return {
     id: user.id,
     email: user.email,
     displayName: user.displayName ?? null,
     role: user.role === "admin" ? "admin" : "user",
+    hasPassword: Boolean(user.passwordHash),
+    providers: [...new Set(providers)],
   };
 }
 

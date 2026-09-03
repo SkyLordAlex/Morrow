@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { UserProvidersItem } from './userProvidersItem';
 import type { UserRole } from './userRole';
 
 export interface User {
@@ -12,4 +13,6 @@ export interface User {
   email: string;
   displayName: string | null;
   role: UserRole;
+  hasPassword: boolean;
+  providers: UserProvidersItem[];
 }

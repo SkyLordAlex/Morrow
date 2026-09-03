@@ -21,11 +21,21 @@ export const UserRole = {
   admin: 'admin',
 } as const;
 
+export type UserProvidersItem = typeof UserProvidersItem[keyof typeof UserProvidersItem];
+
+
+export const UserProvidersItem = {
+  apple: 'apple',
+  google: 'google',
+} as const;
+
 export interface User {
   id: number;
   email: string;
   displayName: string | null;
   role: UserRole;
+  hasPassword: boolean;
+  providers: UserProvidersItem[];
 }
 
 export interface AdminStats {
@@ -93,6 +103,12 @@ export interface LoginInput {
 export interface UpdateAccountInput {
   /** @maxLength 80 */
   displayName: string;
+}
+
+export interface ChangePasswordInput {
+  currentPassword?: string;
+  /** @minLength 8 */
+  newPassword: string;
 }
 
 export interface AppleAuthInput {

@@ -1,5 +1,16 @@
 # Changes from the original upload
 
+## Change password + show sign-in methods (this pass)
+
+Settings → Account:
+
+- **"Sign in with"** now lists how the account authenticates — Password /
+  Google / Apple. The `User` object gained `hasPassword` and `providers`
+  (from the identities table); `toPublicUser` is now async.
+- **Change password** (or **Set a password** for a social-only account). New
+  `POST /auth/password` — verifies the current password when the account has
+  one, requires ≥8 characters. No schema change.
+
 ## Week starts on Sunday or Monday (this pass)
 
 Settings → Calendar → **Week starts on**. The month grid was hardcoded to
