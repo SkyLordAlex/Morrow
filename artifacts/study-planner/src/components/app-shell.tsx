@@ -34,7 +34,6 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { label: 'Today', icon: Target, section: 'today', href: '/' },
-  { label: 'Calendar', icon: CalendarDays, section: 'calendar', href: '/calendar' },
   {
     label: 'This week',
     icon: TrendingUp,
@@ -47,6 +46,7 @@ const NAV_ITEMS: NavItem[] = [
     section: 'assignments',
     anchor: 'assignments-section',
   },
+  { label: 'Calendar', icon: CalendarDays, section: 'calendar', href: '/calendar' },
   {
     label: 'Reviews',
     icon: MessageSquareHeart,
