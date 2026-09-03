@@ -19,4 +19,5 @@ export interface StudySession {
   durationMinutes: number;
   status: StudySessionStatus;
   isToday: boolean;
+  accent?: string;
 }

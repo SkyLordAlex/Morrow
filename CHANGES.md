@@ -1,5 +1,19 @@
 # Changes from the original upload
 
+## Calendar view (this pass)
+
+A new **Calendar** page (`/calendar`, in the sidebar) shows every study session
+laid out on a month grid.
+
+- New API endpoint `GET /planner/sessions` returns all of the signed-in user's
+  sessions (`StudySession` now also carries the assignment `accent` for
+  colour-coding).
+- Month navigation (prev / Today / next); today is marked; each day shows up to
+  three colour-coded session chips (dots on phones).
+- Tap a day to open a panel listing that day's sessions — check one off, or
+  "Move" it to another date, right from the calendar. Both actions refresh the
+  dashboard too.
+
 ## Respect the dates in the note (this pass)
 
 Due dates the student wrote were being missed and replaced with a "3 days from

@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   Sparkles,
   Target,
+  TrendingUp,
   X,
 } from 'lucide-react';
 import { AccountMenu } from '@/components/account-menu';
@@ -18,6 +19,7 @@ import { useAuth } from '@/auth/auth-context';
 
 export type ShellSection =
   | 'today'
+  | 'calendar'
   | 'week'
   | 'assignments'
   | 'reviews'
@@ -32,9 +34,10 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { label: 'Today', icon: Target, section: 'today', href: '/' },
+  { label: 'Calendar', icon: CalendarDays, section: 'calendar', href: '/calendar' },
   {
     label: 'This week',
-    icon: CalendarDays,
+    icon: TrendingUp,
     section: 'week',
     anchor: 'week-section',
   },

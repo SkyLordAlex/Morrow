@@ -7,6 +7,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthProvider, useAuth } from '@/auth/auth-context';
 import NotFound from '@/pages/not-found';
 import Dashboard from '@/pages/dashboard';
+import Calendar from '@/pages/calendar';
 import Reviews from '@/pages/reviews';
 import Admin from '@/pages/admin';
 import SignIn from '@/pages/sign-in';
@@ -27,6 +28,7 @@ function Router() {
     <RoutedErrorBoundary>
       <Switch>
         <Route path="/" component={Dashboard} />
+        <Route path="/calendar" component={Calendar} />
         <Route path="/reviews" component={Reviews} />
         <Route path="/admin" component={Admin} />
         <Route component={NotFound} />

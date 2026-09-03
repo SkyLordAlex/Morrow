@@ -278,7 +278,8 @@ export const GetPlannerDashboardResponse = zod.object({
   "endTime": zod.string(),
   "durationMinutes": zod.number(),
   "status": zod.enum(['scheduled', 'complete', 'skipped']),
-  "isToday": zod.boolean()
+  "isToday": zod.boolean(),
+  "accent": zod.string().optional()
 })),
   "upcomingAssignments": zod.array(zod.object({
   "id": zod.number(),
@@ -301,6 +302,28 @@ export const GetPlannerDashboardResponse = zod.object({
   "totalMinutesThisWeek": zod.number(),
   "completedSessions": zod.number(),
   "streakDays": zod.number()
+})
+
+
+/**
+ * All scheduled and completed sessions, for the calendar view.
+ * @summary Every study session for the signed-in user
+ */
+export const ListPlannerSessionsResponse = zod.object({
+  "sessions": zod.array(zod.object({
+  "id": zod.number(),
+  "taskId": zod.number(),
+  "assignmentId": zod.number(),
+  "title": zod.string(),
+  "subject": zod.string(),
+  "date": zod.coerce.date(),
+  "startTime": zod.string(),
+  "endTime": zod.string(),
+  "durationMinutes": zod.number(),
+  "status": zod.enum(['scheduled', 'complete', 'skipped']),
+  "isToday": zod.boolean(),
+  "accent": zod.string().optional()
+}))
 })
 
 
@@ -350,7 +373,8 @@ export const CreateStudyPlanResponse = zod.object({
   "endTime": zod.string(),
   "durationMinutes": zod.number(),
   "status": zod.enum(['scheduled', 'complete', 'skipped']),
-  "isToday": zod.boolean()
+  "isToday": zod.boolean(),
+  "accent": zod.string().optional()
 })),
   "summary": zod.string()
 })
@@ -401,7 +425,8 @@ export const CompleteStudySessionResponse = zod.object({
   "endTime": zod.string(),
   "durationMinutes": zod.number(),
   "status": zod.enum(['scheduled', 'complete', 'skipped']),
-  "isToday": zod.boolean()
+  "isToday": zod.boolean(),
+  "accent": zod.string().optional()
 })
 
 
@@ -427,7 +452,8 @@ export const RescheduleStudySessionResponse = zod.object({
   "endTime": zod.string(),
   "durationMinutes": zod.number(),
   "status": zod.enum(['scheduled', 'complete', 'skipped']),
-  "isToday": zod.boolean()
+  "isToday": zod.boolean(),
+  "accent": zod.string().optional()
 })
 
 

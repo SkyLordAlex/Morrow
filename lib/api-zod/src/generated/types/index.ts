@@ -19,6 +19,7 @@ export * from './googleAuthInput';
 export * from './healthStatus';
 export * from './loginInput';
 export * from './plannerDashboard';
+export * from './plannerSessionList';
 export * from './registerInput';
 export * from './review';
 export * from './reviewInput';

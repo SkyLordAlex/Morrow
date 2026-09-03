@@ -185,6 +185,7 @@ export interface StudySession {
   durationMinutes: number;
   status: StudySessionStatus;
   isToday: boolean;
+  accent?: string;
 }
 
 export interface TodayFocus {
@@ -215,6 +216,10 @@ export interface PlannerDashboard {
   totalMinutesThisWeek: number;
   completedSessions: number;
   streakDays: number;
+}
+
+export interface PlannerSessionList {
+  sessions: StudySession[];
 }
 
 export interface StudyPlanInput {

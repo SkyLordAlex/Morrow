@@ -29,6 +29,7 @@ import type {
   HealthStatus,
   LoginInput,
   PlannerDashboard,
+  PlannerSessionList,
   RegisterInput,
   Review,
   ReviewInput,
@@ -1304,6 +1305,84 @@ export function useGetPlannerDashboard<TData = Awaited<ReturnType<typeof getPlan
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetPlannerDashboardQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListPlannerSessionsUrl = () => {
+
+
+
+
+  return `/api/planner/sessions`
+}
+
+/**
+ * All scheduled and completed sessions, for the calendar view.
+ * @summary Every study session for the signed-in user
+ */
+export const listPlannerSessions = async ( options?: Parameters<typeof customFetch>[1]): Promise<PlannerSessionList> => {
+
+  return customFetch<PlannerSessionList>(getListPlannerSessionsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListPlannerSessionsQueryKey = () => {
+    return [
+    `/api/planner/sessions`
+    ] as const;
+    }
+
+
+export const getListPlannerSessionsQueryOptions = <TData = Awaited<ReturnType<typeof listPlannerSessions>>, TError = ErrorType<ErrorResponse>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listPlannerSessions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPlannerSessionsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPlannerSessions>>> = ({ signal }) => listPlannerSessions({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPlannerSessions>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListPlannerSessionsQueryResult = NonNullable<Awaited<ReturnType<typeof listPlannerSessions>>>
+export type ListPlannerSessionsQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Every study session for the signed-in user
+ */
+
+export function useListPlannerSessions<TData = Awaited<ReturnType<typeof listPlannerSessions>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listPlannerSessions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListPlannerSessionsQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

@@ -390,6 +390,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PlannerDashboard"
+  /planner/sessions:
+    get:
+      operationId: listPlannerSessions
+      tags: [planner]
+      summary: Every study session for the signed-in user
+      description: All scheduled and completed sessions, for the calendar view.
+      responses:
+        "200":
+          description: Study sessions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlannerSessionList"
+        "401":
+          description: Not signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /planner/plans:
     post:
       operationId: createStudyPlan
@@ -766,6 +785,8 @@ components:
           enum: [scheduled, complete, skipped]
         isToday:
           type: boolean
+        accent:
+          type: string
       required: [id, taskId, assignmentId, title, subject, date, startTime, endTime, durationMinutes, status, isToday]
     TodayFocus:
       type: object
@@ -830,6 +851,14 @@ components:
         streakDays:
           type: number
       required: [greeting, dateLabel, todayFocus, todaySessions, upcomingAssignments, workload, totalMinutesThisWeek, completedSessions, streakDays]
+    PlannerSessionList:
+      type: object
+      properties:
+        sessions:
+          type: array
+          items:
+            $ref: "#/components/schemas/StudySession"
+      required: [sessions]
     StudyPlanInput:
       type: object
       properties:

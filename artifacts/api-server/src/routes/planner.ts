@@ -6,6 +6,7 @@ import {
   CreateStudyPlanBody,
   CreateStudyPlanResponse,
   GetPlannerDashboardResponse,
+  ListPlannerSessionsResponse,
   RescheduleStudySessionBody,
   RescheduleStudySessionParams,
   RescheduleStudySessionResponse,
@@ -98,6 +99,7 @@ async function getSessionRows(userId: number) {
       endTime: studySessionsTable.endTime,
       durationMinutes: studySessionsTable.durationMinutes,
       status: studySessionsTable.status,
+      accent: assignmentsTable.accent,
     })
     .from(studySessionsTable)
     .innerJoin(studyTasksTable, eq(studyTasksTable.id, studySessionsTable.taskId))
@@ -228,6 +230,20 @@ router.get("/planner/dashboard", async (req, res, next) => {
     const userId = currentUserId(req);
     const timeZone = resolveTimeZone(req.get("x-time-zone"));
     res.json(await buildDashboard(userId, timeZone));
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/planner/sessions", async (req, res, next) => {
+  try {
+    const userId = currentUserId(req);
+    const timeZone = resolveTimeZone(req.get("x-time-zone"));
+    const todayKey = zonedDateKey(timeZone);
+    const sessions = (await getSessionRows(userId)).map((row) =>
+      sessionView(row, todayKey),
+    );
+    res.json(ListPlannerSessionsResponse.parse({ sessions }));
   } catch (error) {
     next(error);
   }
