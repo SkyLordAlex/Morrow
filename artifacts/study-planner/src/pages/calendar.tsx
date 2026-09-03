@@ -18,6 +18,7 @@ import {
   type StudySession,
 } from '@workspace/api-client-react';
 import { AppShell } from '@/components/app-shell';
+import { useWeekStart } from '@/lib/week-start';
 
 const accentStyles: Record<string, { ink: string; soft: string; line: string }> = {
   amber: { ink: '#B36A1E', soft: '#FFF0C9', line: '#E3B35D' },
@@ -91,11 +92,13 @@ function buildGrid(
   month: number,
   byDay: Map<string, StudySession[]>,
   todayKey: string,
+  weekStart: 0 | 1,
 ): DayCell[] {
   const first = new Date(year, month, 1);
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const weeks = Math.ceil((first.getDay() + daysInMonth) / 7);
-  const start = new Date(year, month, 1 - first.getDay());
+  const leading = (first.getDay() - weekStart + 7) % 7;
+  const weeks = Math.ceil((leading + daysInMonth) / 7);
+  const start = new Date(year, month, 1 - leading);
   const cells: DayCell[] = [];
   for (let i = 0; i < weeks * 7; i += 1) {
     const date = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
@@ -281,6 +284,12 @@ export default function Calendar() {
   });
   const completeSession = useCompleteStudySession();
   const rescheduleSession = useRescheduleStudySession();
+  const [weekStart] = useWeekStart();
+
+  const weekdayHeader = useMemo(
+    () => (weekStart === 1 ? [...WEEKDAYS.slice(1), WEEKDAYS[0]] : WEEKDAYS),
+    [weekStart],
+  );
 
   // The API serialises `date` as a full ISO timestamp; the calendar works in
   // plain "YYYY-MM-DD" day keys.
@@ -304,8 +313,8 @@ export default function Calendar() {
   }, [sessions]);
 
   const grid = useMemo(
-    () => buildGrid(view.year, view.month, byDay, todayKey),
-    [view, byDay, todayKey],
+    () => buildGrid(view.year, view.month, byDay, todayKey, weekStart),
+    [view, byDay, todayKey, weekStart],
   );
 
   const monthLabel = `${MONTHS[view.month]} ${view.year}`;
@@ -425,7 +434,7 @@ export default function Calendar() {
           ) : (
             <>
               <div className="grid grid-cols-7 gap-1">
-                {WEEKDAYS.map((weekday) => (
+                {weekdayHeader.map((weekday) => (
                   <div
                     key={weekday}
                     className="pb-1 text-center font-mono text-[9px] font-medium uppercase tracking-[0.12em] text-muted-foreground"

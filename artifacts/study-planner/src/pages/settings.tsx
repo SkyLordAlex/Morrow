@@ -17,6 +17,7 @@ import {
 import { AppShell } from '@/components/app-shell';
 import { useAuth } from '@/auth/auth-context';
 import { useTheme, type ThemeMode } from '@/theme/theme-context';
+import { useWeekStart } from '@/lib/week-start';
 
 const THEME_OPTIONS: {
   value: ThemeMode;
@@ -355,6 +356,50 @@ function AccountSettings() {
   );
 }
 
+function CalendarSettings() {
+  const [weekStart, setWeekStart] = useWeekStart();
+  const options: { value: 0 | 1; label: string }[] = [
+    { value: 0, label: 'Sunday' },
+    { value: 1, label: 'Monday' },
+  ];
+
+  return (
+    <section
+      className="rounded-2xl border border-border/80 bg-card p-5 shadow-sm sm:p-6"
+      data-testid="section-calendar"
+    >
+      <p className="font-mono text-[10px] uppercase tracking-[0.17em] text-muted-foreground">
+        Calendar
+      </p>
+      <h2 className="mt-1 font-serif text-[24px]">Week starts on</h2>
+      <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
+        The first column of the month grid.
+      </p>
+      <div className="mt-4 inline-flex rounded-xl border border-border p-1">
+        {options.map((option) => {
+          const selected = weekStart === option.value;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => setWeekStart(option.value)}
+              aria-pressed={selected}
+              data-testid={`button-weekstart-${option.value}`}
+              className={`rounded-lg px-4 py-2 text-xs font-bold transition-colors ${
+                selected
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {option.label}
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 export default function Settings() {
   const { user } = useAuth();
   const { mode, resolved, setMode } = useTheme();
@@ -424,6 +469,8 @@ export default function Settings() {
         </section>
 
         <PlanningSettings />
+
+        <CalendarSettings />
 
         {user ? <AccountSettings /> : null}
       </div>

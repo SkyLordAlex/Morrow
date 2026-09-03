@@ -1,5 +1,11 @@
 # Changes from the original upload
 
+## Week starts on Sunday or Monday (this pass)
+
+Settings → Calendar → **Week starts on**. The month grid was hardcoded to
+Sunday; now it can begin on Monday. A per-device preference in `localStorage`
+(`morrow.weekStartsOn`), like the theme — no server change.
+
 ## Edit your display name (this pass)
 
 Settings → Account: the name is now an editable field with a Save button
