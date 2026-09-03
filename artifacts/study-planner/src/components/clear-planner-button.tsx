@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Trash2 } from 'lucide-react';
 import {
   getGetPlannerDashboardQueryKey,
+  getListPlannerSessionsQueryKey,
   useClearPlanner,
 } from '@workspace/api-client-react';
 import {
@@ -16,7 +17,13 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-export function ClearPlannerButton({ disabled }: { disabled?: boolean }) {
+export function ClearPlannerButton({
+  disabled,
+  variant = 'inline',
+}: {
+  disabled?: boolean;
+  variant?: 'inline' | 'block';
+}) {
   const queryClient = useQueryClient();
   const clearPlanner = useClearPlanner();
   const [open, setOpen] = useState(false);
@@ -28,6 +35,9 @@ export function ClearPlannerButton({ disabled }: { disabled?: boolean }) {
         queryClient.invalidateQueries({
           queryKey: getGetPlannerDashboardQueryKey(),
         });
+        queryClient.invalidateQueries({
+          queryKey: getListPlannerSessionsQueryKey(),
+        });
       },
     });
 
@@ -38,7 +48,11 @@ export function ClearPlannerButton({ disabled }: { disabled?: boolean }) {
         onClick={() => setOpen(true)}
         disabled={disabled}
         data-testid="button-clear-planner"
-        className="inline-flex items-center gap-1.5 text-xs font-bold text-muted-foreground transition-colors hover:text-destructive disabled:opacity-40"
+        className={
+          variant === 'block'
+            ? 'inline-flex items-center gap-2 rounded-xl border border-destructive/40 px-3.5 py-2.5 text-xs font-extrabold text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-40'
+            : 'inline-flex items-center gap-1.5 text-xs font-bold text-muted-foreground transition-colors hover:text-destructive disabled:opacity-40'
+        }
       >
         <Trash2 className="h-3.5 w-3.5" />
         Delete all plans

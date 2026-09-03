@@ -16,6 +16,7 @@ import {
   useUpdateSettings,
 } from '@workspace/api-client-react';
 import { AppShell } from '@/components/app-shell';
+import { ClearPlannerButton } from '@/components/clear-planner-button';
 import { useAuth } from '@/auth/auth-context';
 import { useTheme, type ThemeMode } from '@/theme/theme-context';
 import { useWeekStart } from '@/lib/week-start';
@@ -675,6 +676,23 @@ export default function Settings() {
         <TimeZoneSettings />
 
         {user ? <AccountSettings /> : null}
+
+        <section
+          className="rounded-2xl border border-border/80 bg-card p-5 shadow-sm sm:p-6"
+          data-testid="section-data"
+        >
+          <p className="font-mono text-[10px] uppercase tracking-[0.17em] text-muted-foreground">
+            Your data
+          </p>
+          <h2 className="mt-1 font-serif text-[24px]">Start over</h2>
+          <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
+            Clear every assignment, task, and study session. Your account and
+            settings stay. This can&apos;t be undone.
+          </p>
+          <div className="mt-4">
+            <ClearPlannerButton variant="block" />
+          </div>
+        </section>
       </div>
     </AppShell>
   );

@@ -1,5 +1,11 @@
 # Changes from the original upload
 
+## "Delete all plans" in Settings (this pass)
+
+Added a **Your data → Start over** section to Settings with the delete-all-plans
+action (same confirm dialog). Still on the dashboard too. The clear action now
+also invalidates the calendar's session list, not just the dashboard.
+
 ## Time-zone override (this pass)
 
 Settings → Time zone: follow the device (default) or pin a specific IANA zone.
