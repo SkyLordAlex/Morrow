@@ -121,38 +121,46 @@ function parseDueDate(clause: string, todayKey: string) {
   return addDaysKey(todayKey, 3);
 }
 
-export function taskBlueprint(kind: string) {
+// Task blueprints per assignment kind. Titles fold in the subject so a session
+// reads as tailored ("Review your Biology notes") rather than generic. The AI
+// path writes its own titles; this is the fallback.
+export function taskBlueprint(
+  kind: string,
+  subject: string,
+): readonly (readonly [string, number])[] {
+  const s = subject.trim() || "the assignment";
+
   if (kind === "test" || kind === "exam" || kind === "quiz") {
     return [
-      ["Review class notes", 35],
-      ["Make a one-page study guide", 30],
-      ["Practice recall questions", 35],
-      ["Do a timed review", 20],
+      [`Re-read the ${s} material and mark what's shaky`, 35],
+      [`Make a one-page ${s} study sheet`, 30],
+      [`Practice recall questions for ${s}`, 35],
+      [`Do a timed ${s} self-quiz and fix the gaps`, 20],
     ] as const;
   }
   if (kind === "project" || kind === "presentation") {
     return [
-      ["Choose a direction", 30],
-      ["Gather sources and examples", 45],
-      ["Build a rough outline", 35],
-      ["Draft the main work", 45],
-      ["Revise and polish", 25],
+      [`Decide on a direction for the ${s} project`, 30],
+      [`Gather sources and examples for ${s}`, 45],
+      [`Build an outline for the ${s} project`, 35],
+      [`Draft the main ${s} work`, 45],
+      [`Revise and polish the ${s} project`, 25],
     ] as const;
   }
   if (kind === "paper" || kind === "essay") {
     return [
-      ["Choose a topic and question", 25],
-      ["Gather evidence", 40],
-      ["Write an outline", 25],
-      ["Draft the argument", 45],
-      ["Edit for clarity", 25],
+      [`Choose a topic and question for the ${s} essay`, 25],
+      [`Gather evidence for the ${s} essay`, 40],
+      [`Outline the ${s} essay`, 25],
+      [`Draft the ${s} argument`, 45],
+      [`Edit the ${s} essay for clarity`, 25],
     ] as const;
   }
   return [
-    ["Understand the instructions", 15],
-    ["Complete the first half", 25],
-    ["Finish the work", 25],
-    ["Check answers and submit", 15],
+    [`Read through the ${s} instructions`, 15],
+    [`Work through the first half of the ${s} work`, 25],
+    [`Finish the rest of the ${s} work`, 25],
+    [`Check your ${s} answers and submit`, 15],
   ] as const;
 }
 
@@ -236,7 +244,7 @@ export function parseAssignments(
       dueDate,
       dueLabel: formatDueLabel(dueDate, todayKey),
       kind,
-      taskTitles: taskBlueprint(kind).map(([taskTitle]) => taskTitle),
+      taskTitles: taskBlueprint(kind, subject).map(([taskTitle]) => taskTitle),
     };
   });
 }
@@ -300,10 +308,9 @@ export function rulePlan(note: string, todayKey: string): GeneratedPlan {
       subject: item.subject,
       dueDate: item.dueDate,
       kind: item.kind,
-      tasks: taskBlueprint(item.kind).map(([title, durationMinutes]) => ({
-        title,
-        durationMinutes,
-      })),
+      tasks: taskBlueprint(item.kind, item.subject).map(
+        ([title, durationMinutes]) => ({ title, durationMinutes }),
+      ),
     })),
     blockedWeekdays: detectBlockedWeekdays(note),
   };
