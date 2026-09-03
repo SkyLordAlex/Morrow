@@ -1,5 +1,19 @@
 # Changes from the original upload
 
+## Settings page with light / dark / system theme (this pass)
+
+New **Settings** page (`/settings`, in the sidebar and the account menu). The
+CSS already had a full dark palette (`.dark` in `index.css`) but nothing toggled
+it.
+
+- `src/theme/theme-context.tsx`: `ThemeProvider` / `useTheme`. Stores the choice
+  in `localStorage` (`morrow.theme`), toggles `.dark` on `<html>`, and follows
+  `prefers-color-scheme` live when set to "System".
+- Inline script in `index.html` applies the saved theme before first paint — no
+  light-mode flash on load.
+- Settings page: a three-way Light / System / Dark picker, plus a read-only
+  account summary.
+
 ## Calendar view (this pass)
 
 A new **Calendar** page (`/calendar`, in the sidebar) shows every study session

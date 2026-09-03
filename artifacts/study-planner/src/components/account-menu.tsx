@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { LogOut, Trash2 } from 'lucide-react';
+import { useLocation } from 'wouter';
+import { LogOut, SlidersHorizontal, Trash2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,6 +29,7 @@ function initials(user: { displayName: string | null; email: string }): string {
 
 export function AccountMenu() {
   const { user, signOut, deleteAccount } = useAuth();
+  const [, navigate] = useLocation();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -48,6 +50,13 @@ export function AccountMenu() {
             {user.email}
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
+          <DropdownMenuItem
+            data-testid="button-open-settings"
+            onSelect={() => navigate('/settings')}
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            Settings
+          </DropdownMenuItem>
           <DropdownMenuItem
             data-testid="button-sign-out"
             onSelect={() => void signOut()}

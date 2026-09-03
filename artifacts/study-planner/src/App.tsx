@@ -5,11 +5,13 @@ import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthProvider, useAuth } from '@/auth/auth-context';
+import { ThemeProvider } from '@/theme/theme-context';
 import NotFound from '@/pages/not-found';
 import Dashboard from '@/pages/dashboard';
 import Calendar from '@/pages/calendar';
 import Reviews from '@/pages/reviews';
 import Admin from '@/pages/admin';
+import Settings from '@/pages/settings';
 import SignIn from '@/pages/sign-in';
 import { Privacy, Terms } from '@/pages/legal';
 import {
@@ -30,6 +32,7 @@ function Router() {
         <Route path="/" component={Dashboard} />
         <Route path="/calendar" component={Calendar} />
         <Route path="/reviews" component={Reviews} />
+        <Route path="/settings" component={Settings} />
         <Route path="/admin" component={Admin} />
         <Route component={NotFound} />
       </Switch>
@@ -70,14 +73,16 @@ function AuthGate() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <AuthProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-            <AuthGate />
-          </WouterRouter>
-          <Toaster />
-        </AuthProvider>
-      </TooltipProvider>
+      <ThemeProvider>
+        <TooltipProvider>
+          <AuthProvider>
+            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+              <AuthGate />
+            </WouterRouter>
+            <Toaster />
+          </AuthProvider>
+        </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

@@ -8,6 +8,7 @@ import {
   LockKeyhole,
   Menu,
   MessageSquareHeart,
+  Settings,
   ShieldCheck,
   Sparkles,
   Target,
@@ -23,6 +24,7 @@ export type ShellSection =
   | 'week'
   | 'assignments'
   | 'reviews'
+  | 'settings'
   | 'admin';
 
 type NavItem = {
@@ -53,6 +55,7 @@ const NAV_ITEMS: NavItem[] = [
     section: 'reviews',
     href: '/reviews',
   },
+  { label: 'Settings', icon: Settings, section: 'settings', href: '/settings' },
   {
     label: 'Admin',
     icon: ShieldCheck,
