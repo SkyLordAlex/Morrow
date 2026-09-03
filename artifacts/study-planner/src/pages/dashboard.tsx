@@ -340,6 +340,16 @@ function PlanComposer({
             data-testid="input-plan-note"
             className="min-h-[132px] w-full resize-none rounded-2xl border border-input bg-background px-4 py-3 text-sm leading-6 text-foreground shadow-inner outline-none transition-colors placeholder:text-muted-foreground/65 focus:border-primary focus:ring-2 focus:ring-primary/10"
           />
+          <p className="mt-2 text-[11px] leading-5 text-muted-foreground">
+            Include the <span className="font-semibold text-foreground">subject</span>, what it{' '}
+            <span className="font-semibold text-foreground">is</span> (test, essay, project…), and{' '}
+            <span className="font-semibold text-foreground">when it&apos;s due</span>. You can add
+            days you can&apos;t study.
+            <br />
+            <span className="font-mono text-[10px]">
+              Ex: math test Friday, English essay due next Wednesday, bio quiz on the 20th, no weekends
+            </span>
+          </p>
           <div className="mt-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <label className="block">
               <span className="mb-2 block text-xs font-extrabold text-foreground">Time I have each day</span>
