@@ -1,5 +1,12 @@
 # Changes from the original upload
 
+## Edit your display name (this pass)
+
+Settings → Account: the name is now an editable field with a Save button
+(previously read-only). New `PATCH /auth/account` endpoint; the auth context
+exposes `updateDisplayName` and refreshes the cached user. No schema change —
+uses the existing `users.display_name` column.
+
 ## Preferred study time (this pass)
 
 Settings → Planning → **When sessions start**: Morning (~8 AM), Afternoon

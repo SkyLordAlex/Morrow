@@ -36,6 +36,7 @@ export * from './studyTaskStatus';
 export * from './taskUpdate';
 export * from './taskUpdateStatus';
 export * from './todayFocus';
+export * from './updateAccountInput';
 export * from './user';
 export * from './userRole';
 export * from './userSettings';

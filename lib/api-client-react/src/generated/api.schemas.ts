@@ -90,6 +90,11 @@ export interface LoginInput {
   password: string;
 }
 
+export interface UpdateAccountInput {
+  /** @maxLength 80 */
+  displayName: string;
+}
+
 export interface AppleAuthInput {
   /** @minLength 1 */
   identityToken: string;

@@ -169,6 +169,35 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
   /auth/account:
+    patch:
+      operationId: updateAccount
+      tags: [auth]
+      summary: Update the signed-in user's profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAccountInput"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Invalid profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     delete:
       operationId: deleteAccount
       tags: [auth]
@@ -705,6 +734,13 @@ components:
         password:
           type: string
       required: [email, password]
+    UpdateAccountInput:
+      type: object
+      properties:
+        displayName:
+          type: string
+          maxLength: 80
+      required: [displayName]
     AppleAuthInput:
       type: object
       properties:

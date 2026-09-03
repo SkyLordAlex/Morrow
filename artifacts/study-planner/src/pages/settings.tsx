@@ -256,6 +256,105 @@ function PlanningSettings() {
   );
 }
 
+function AccountSettings() {
+  const { user, updateDisplayName } = useAuth();
+  const [name, setName] = useState(user?.displayName ?? '');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(false);
+  const [savedAt, setSavedAt] = useState(0);
+
+  useEffect(() => {
+    setName(user?.displayName ?? '');
+  }, [user?.displayName]);
+
+  if (!user) return null;
+
+  const trimmed = name.trim();
+  const dirty = trimmed !== (user.displayName ?? '').trim();
+
+  const save = () => {
+    if (!trimmed || !dirty) return;
+    setSaving(true);
+    setError(false);
+    updateDisplayName(trimmed)
+      .then(() => setSavedAt(Date.now()))
+      .catch(() => setError(true))
+      .finally(() => setSaving(false));
+  };
+
+  const showSaved = savedAt > 0 && Date.now() - savedAt < 4000;
+
+  return (
+    <section
+      className="rounded-2xl border border-border/80 bg-card p-5 shadow-sm sm:p-6"
+      data-testid="section-account"
+    >
+      <div className="flex items-center justify-between">
+        <p className="font-mono text-[10px] uppercase tracking-[0.17em] text-muted-foreground">
+          Account
+        </p>
+        <SavedTick saving={saving} saved={showSaved} />
+      </div>
+      <h2 className="mt-1 font-serif text-[24px]">You</h2>
+
+      <div className="mt-4">
+        <label
+          htmlFor="display-name"
+          className="block text-xs font-extrabold text-foreground"
+        >
+          Name
+        </label>
+        <div className="mt-2 flex items-center gap-2">
+          <input
+            id="display-name"
+            value={name}
+            maxLength={80}
+            onChange={(event) => setName(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') save();
+            }}
+            placeholder="Your name"
+            data-testid="input-display-name"
+            className="w-full max-w-xs rounded-xl border border-input bg-background px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
+          />
+          <button
+            type="button"
+            onClick={save}
+            disabled={!trimmed || !dirty || saving}
+            data-testid="button-save-name"
+            className="rounded-xl bg-primary px-3.5 py-2.5 text-xs font-extrabold text-primary-foreground transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Save
+          </button>
+        </div>
+        {error ? (
+          <p className="mt-1.5 text-[11px] font-semibold text-destructive">
+            Couldn&apos;t save that — try again.
+          </p>
+        ) : null}
+      </div>
+
+      <dl className="mt-5 space-y-3 border-t border-border/60 pt-4 text-sm">
+        <div className="flex items-center justify-between gap-4">
+          <dt className="text-muted-foreground">Email</dt>
+          <dd className="truncate font-semibold text-foreground">
+            {user.email}
+          </dd>
+        </div>
+        {user.role === 'admin' ? (
+          <div className="flex items-center justify-between gap-4">
+            <dt className="text-muted-foreground">Role</dt>
+            <dd className="font-semibold text-primary">Admin</dd>
+          </div>
+        ) : null}
+      </dl>
+      <p className="mt-4 text-[11px] leading-4 text-muted-foreground">
+        Sign out or delete your account from the menu in the top-right.
+      </p>
+    </section>
+  );
+}
+
 export default function Settings() {
   const { user } = useAuth();
   const { mode, resolved, setMode } = useTheme();
@@ -326,40 +425,7 @@ export default function Settings() {
 
         <PlanningSettings />
 
-        {user ? (
-          <section
-            className="rounded-2xl border border-border/80 bg-card p-5 shadow-sm sm:p-6"
-            data-testid="section-account"
-          >
-            <p className="font-mono text-[10px] uppercase tracking-[0.17em] text-muted-foreground">
-              Account
-            </p>
-            <h2 className="mt-1 font-serif text-[24px]">You</h2>
-            <dl className="mt-4 space-y-3 text-sm">
-              <div className="flex items-center justify-between gap-4">
-                <dt className="text-muted-foreground">Name</dt>
-                <dd className="font-semibold text-foreground">
-                  {user.displayName || '—'}
-                </dd>
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <dt className="text-muted-foreground">Email</dt>
-                <dd className="truncate font-semibold text-foreground">
-                  {user.email}
-                </dd>
-              </div>
-              {user.role === 'admin' ? (
-                <div className="flex items-center justify-between gap-4">
-                  <dt className="text-muted-foreground">Role</dt>
-                  <dd className="font-semibold text-primary">Admin</dd>
-                </div>
-              ) : null}
-            </dl>
-            <p className="mt-4 text-[11px] leading-4 text-muted-foreground">
-              Sign out or delete your account from the menu in the top-right.
-            </p>
-          </section>
-        ) : null}
+        {user ? <AccountSettings /> : null}
       </div>
     </AppShell>
   );

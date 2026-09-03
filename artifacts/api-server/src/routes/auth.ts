@@ -8,6 +8,8 @@ import {
   LoginResponse,
   RegisterBody,
   RegisterResponse,
+  UpdateAccountBody,
+  UpdateAccountResponse,
 } from "@workspace/api-zod";
 import { db, usersTable } from "@workspace/db";
 import { verifyPassword } from "../lib/auth/password.js";
@@ -160,6 +162,33 @@ router.post("/auth/logout", requireAuth, async (req, res, next) => {
     if (token) await revokeSession(token);
     res.status(204).end();
   } catch (error) {
+    next(error);
+  }
+});
+
+router.patch("/auth/account", requireAuth, async (req, res, next) => {
+  try {
+    const input = UpdateAccountBody.parse(req.body);
+    const displayName = input.displayName.trim().slice(0, 80);
+    if (!displayName) {
+      res.status(400).json({ error: "Your name can't be empty." });
+      return;
+    }
+    const [updated] = await db
+      .update(usersTable)
+      .set({ displayName })
+      .where(eq(usersTable.id, currentUserId(req)))
+      .returning();
+    if (!updated) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
+    res.json(UpdateAccountResponse.parse(toPublicUser(updated)));
+  } catch (error) {
+    if (isZodError(error)) {
+      res.status(400).json({ error: "Enter a name of at most 80 characters." });
+      return;
+    }
     next(error);
   }
 });

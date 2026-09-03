@@ -122,6 +122,25 @@ export const LogoutResponse = zod.void()
 
 
 /**
+ * @summary Update the signed-in user's profile
+ */
+export const updateAccountBodyDisplayNameMax = 80;
+
+
+
+export const UpdateAccountBody = zod.object({
+  "displayName": zod.string().max(updateAccountBodyDisplayNameMax)
+})
+
+export const UpdateAccountResponse = zod.object({
+  "id": zod.number(),
+  "email": zod.string(),
+  "displayName": zod.union([zod.string(),zod.null()]),
+  "role": zod.enum(['user', 'admin'])
+})
+
+
+/**
  * @summary Permanently delete the signed-in account and all its data
  */
 export const DeleteAccountResponse = zod.void()

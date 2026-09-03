@@ -16,6 +16,7 @@ import {
   logout as logoutRequest,
   register as registerRequest,
   setAuthTokenGetter,
+  updateAccount as updateAccountRequest,
   type AuthResult,
   type User,
 } from '@workspace/api-client-react';
@@ -65,6 +66,7 @@ interface AuthContextValue {
   signInWithApple: (identityToken: string) => Promise<void>;
   signOut: () => Promise<void>;
   deleteAccount: () => Promise<void>;
+  updateDisplayName: (displayName: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -134,6 +136,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       deleteAccount: async () => {
         await deleteAccountRequest();
         clear();
+      },
+      updateDisplayName: async (displayName) => {
+        const updated = await updateAccountRequest({ displayName });
+        setUser(updated);
       },
     }),
     [status, user, adopt, clear],
