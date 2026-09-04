@@ -36,6 +36,7 @@ import type {
   ReviewInput,
   ReviewSummary,
   SessionRescheduleInput,
+  SetCalendarFeedInput,
   SetRoleInput,
   StudyPlan,
   StudyPlanInput,
@@ -1531,6 +1532,77 @@ export const useUpdateSettings = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getUpdateSettingsMutationOptions(options));
+    }
+
+export const getSetCalendarFeedUrl = () => {
+
+
+
+
+  return `/api/settings/calendar-feed`
+}
+
+/**
+ * @summary Turn the iCalendar feed on or off (on again rotates the URL)
+ */
+export const setCalendarFeed = async (setCalendarFeedInput: SetCalendarFeedInput, options?: Parameters<typeof customFetch>[1]): Promise<UserSettings> => {
+
+  return customFetch<UserSettings>(getSetCalendarFeedUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(setCalendarFeedInput)
+  }
+);}
+
+
+
+
+
+export const getSetCalendarFeedMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setCalendarFeed>>, TError,{data: BodyType<SetCalendarFeedInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof setCalendarFeed>>, TError,{data: BodyType<SetCalendarFeedInput>}, TContext> => {
+
+const mutationKey = ['setCalendarFeed'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setCalendarFeed>>, {data: BodyType<SetCalendarFeedInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  setCalendarFeed(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetCalendarFeedMutationResult = NonNullable<Awaited<ReturnType<typeof setCalendarFeed>>>
+    export type SetCalendarFeedMutationBody = BodyType<SetCalendarFeedInput>
+    export type SetCalendarFeedMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Turn the iCalendar feed on or off (on again rotates the URL)
+ */
+export const useSetCalendarFeed = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setCalendarFeed>>, TError,{data: BodyType<SetCalendarFeedInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof setCalendarFeed>>,
+        TError,
+        {data: BodyType<SetCalendarFeedInput>},
+        TContext
+      > => {
+      return useMutation(getSetCalendarFeedMutationOptions(options));
     }
 
 export const getGetPlannerDashboardUrl = () => {

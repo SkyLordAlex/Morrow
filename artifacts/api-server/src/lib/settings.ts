@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { db, userSettingsTable } from "@workspace/db";
 import { sanitizeBlockedWeekdays } from "./planner/types.js";
@@ -9,12 +10,14 @@ export type ResolvedSettings = {
   defaultAvailableMinutes: number;
   blockedWeekdays: number[];
   preferredTime: PreferredTime;
+  calendarToken: string | null;
 };
 
 export const DEFAULT_SETTINGS: ResolvedSettings = {
   defaultAvailableMinutes: 90,
   blockedWeekdays: [],
   preferredTime: "afternoon",
+  calendarToken: null,
 };
 
 // The clock hour study sessions start at for each preference.
@@ -50,6 +53,7 @@ export async function getUserSettings(
       defaultAvailableMinutes: clampMinutes(row.defaultAvailableMinutes),
       blockedWeekdays: sanitizeBlockedWeekdays(row.blockedWeekdays),
       preferredTime: coercePreferredTime(row.preferredTime),
+      calendarToken: row.calendarToken ?? null,
     };
   } catch (error) {
     // The most likely cause is the `user_settings` table not existing yet
@@ -82,6 +86,7 @@ export async function saveUserSettings(
       patch.preferredTime === undefined
         ? current.preferredTime
         : coercePreferredTime(patch.preferredTime),
+    calendarToken: current.calendarToken,
   };
 
   await db
@@ -93,4 +98,34 @@ export async function saveUserSettings(
     });
 
   return next;
+}
+
+/**
+ * Turn the iCalendar feed on (minting a fresh token) or off. Rotating simply
+ * calls this with `enabled: true` again — the old URL stops working.
+ */
+export async function setCalendarFeed(
+  userId: number,
+  enabled: boolean,
+): Promise<string | null> {
+  const token = enabled ? randomBytes(24).toString("base64url") : null;
+  await db
+    .insert(userSettingsTable)
+    .values({ userId, calendarToken: token, updatedAt: new Date() })
+    .onConflictDoUpdate({
+      target: userSettingsTable.userId,
+      set: { calendarToken: token, updatedAt: new Date() },
+    });
+  return token;
+}
+
+export async function findUserIdByCalendarToken(
+  token: string,
+): Promise<number | null> {
+  if (!token) return null;
+  const [row] = await db
+    .select({ userId: userSettingsTable.userId })
+    .from(userSettingsTable)
+    .where(eq(userSettingsTable.calendarToken, token));
+  return row?.userId ?? null;
 }

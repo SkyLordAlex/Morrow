@@ -13,6 +13,7 @@ import {
   getGetSettingsQueryKey,
   useChangePassword,
   useGetSettings,
+  useSetCalendarFeed,
   useUpdateSettings,
 } from '@workspace/api-client-react';
 import { AppShell } from '@/components/app-shell';
@@ -555,7 +556,102 @@ function CalendarSettings() {
           );
         })}
       </div>
+
+      <CalendarFeed />
     </section>
+  );
+}
+
+function CalendarFeed() {
+  const queryClient = useQueryClient();
+  const query = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
+  const toggle = useSetCalendarFeed();
+  const [copied, setCopied] = useState(false);
+
+  const url = query.data?.calendarUrl ?? null;
+
+  const run = (enabled: boolean) =>
+    toggle.mutate(
+      { data: { enabled } },
+      {
+        onSuccess: () =>
+          queryClient.invalidateQueries({ queryKey: getGetSettingsQueryKey() }),
+      },
+    );
+
+  const copy = () => {
+    if (!url) return;
+    navigator.clipboard?.writeText(url).then(
+      () => {
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 2000);
+      },
+      () => undefined,
+    );
+  };
+
+  return (
+    <div className="mt-6 border-t border-border/60 pt-4">
+      <span className="block text-xs font-extrabold text-foreground">
+        Subscribe from another calendar
+      </span>
+      <p className="mt-1 text-[11px] leading-4 text-muted-foreground">
+        A private link your study sessions publish to. Add it in Google Calendar
+        (“From URL”) or Apple Calendar (“New Calendar Subscription”). Read-only,
+        refreshes on its own.
+      </p>
+
+      {url ? (
+        <div className="mt-3 space-y-2">
+          <div className="flex items-center gap-2">
+            <input
+              readOnly
+              value={url}
+              onFocus={(event) => event.target.select()}
+              data-testid="input-calendar-url"
+              className="w-full max-w-md rounded-xl border border-input bg-background px-3 py-2 font-mono text-[11px] outline-none"
+            />
+            <button
+              type="button"
+              onClick={copy}
+              data-testid="button-copy-calendar-url"
+              className="shrink-0 rounded-xl bg-primary px-3 py-2 text-xs font-extrabold text-primary-foreground"
+            >
+              {copied ? 'Copied' : 'Copy'}
+            </button>
+          </div>
+          <div className="flex items-center gap-4 text-[11px] font-bold">
+            <button
+              type="button"
+              onClick={() => run(true)}
+              disabled={toggle.isPending}
+              className="text-muted-foreground hover:text-foreground disabled:opacity-50"
+            >
+              Reset link
+            </button>
+            <button
+              type="button"
+              onClick={() => run(false)}
+              disabled={toggle.isPending}
+              data-testid="button-disable-calendar-feed"
+              className="text-muted-foreground hover:text-destructive disabled:opacity-50"
+            >
+              Turn off
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => run(true)}
+          disabled={toggle.isPending}
+          data-testid="button-enable-calendar-feed"
+          className="mt-3 rounded-xl border border-border px-3.5 py-2.5 text-xs font-extrabold text-foreground hover:bg-muted disabled:opacity-50"
+        >
+          {toggle.isPending ? 'Creating…' : 'Create calendar link'}
+        </button>
+      )}
+    </div>
   );
 }
 

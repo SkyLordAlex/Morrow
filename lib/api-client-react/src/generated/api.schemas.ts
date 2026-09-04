@@ -289,6 +289,11 @@ export interface UserSettings {
   defaultAvailableMinutes: number;
   blockedWeekdays: number[];
   preferredTime: UserSettingsPreferredTime;
+  calendarUrl: string | null;
+}
+
+export interface SetCalendarFeedInput {
+  enabled: boolean;
 }
 
 export type UserSettingsInputPreferredTime = typeof UserSettingsInputPreferredTime[keyof typeof UserSettingsInputPreferredTime];

@@ -26,6 +26,7 @@ export * from './review';
 export * from './reviewInput';
 export * from './reviewSummary';
 export * from './sessionRescheduleInput';
+export * from './setCalendarFeedInput';
 export * from './setRoleInput';
 export * from './setRoleInputRole';
 export * from './studyPlan';

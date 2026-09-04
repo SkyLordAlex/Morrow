@@ -1,5 +1,20 @@
 # Changes from the original upload
 
+## Calendar subscription feed (.ics) (this pass)
+
+Settings → Calendar → **Subscribe from another calendar**: turn on a private
+`webcal`-style link that Google/Apple Calendar can subscribe to, so study
+sessions show up alongside everything else.
+
+- New `user_settings.calendar_token` (unguessable, nullable). **`db push`
+  again.**
+- `POST /settings/calendar-feed` `{ enabled }` mints/clears the token
+  (enabling again rotates it); the settings response carries the full
+  `calendarUrl`.
+- `GET /calendar/<token>.ics` — public, token-gated, `text/calendar`. Simple
+  RFC-5545 writer in `lib/ical.ts`; each session is a floating-time VEVENT
+  with a stable UID so refreshes update in place.
+
 ## "Delete all plans" in Settings (this pass)
 
 Added a **Your data → Start over** section to Settings with the delete-all-plans

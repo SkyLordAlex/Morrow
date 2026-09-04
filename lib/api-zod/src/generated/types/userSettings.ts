@@ -11,4 +11,5 @@ export interface UserSettings {
   defaultAvailableMinutes: number;
   blockedWeekdays: number[];
   preferredTime: UserSettingsPreferredTime;
+  calendarUrl: string | null;
 }

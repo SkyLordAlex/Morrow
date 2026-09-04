@@ -305,7 +305,8 @@ export const SetUserRoleResponse = zod.object({
 export const GetSettingsResponse = zod.object({
   "defaultAvailableMinutes": zod.number(),
   "blockedWeekdays": zod.array(zod.number()),
-  "preferredTime": zod.enum(['morning', 'afternoon', 'evening'])
+  "preferredTime": zod.enum(['morning', 'afternoon', 'evening']),
+  "calendarUrl": zod.union([zod.string(),zod.null()])
 })
 
 
@@ -326,7 +327,23 @@ export const UpdateSettingsBody = zod.object({
 export const UpdateSettingsResponse = zod.object({
   "defaultAvailableMinutes": zod.number(),
   "blockedWeekdays": zod.array(zod.number()),
-  "preferredTime": zod.enum(['morning', 'afternoon', 'evening'])
+  "preferredTime": zod.enum(['morning', 'afternoon', 'evening']),
+  "calendarUrl": zod.union([zod.string(),zod.null()])
+})
+
+
+/**
+ * @summary Turn the iCalendar feed on or off (on again rotates the URL)
+ */
+export const SetCalendarFeedBody = zod.object({
+  "enabled": zod.boolean()
+})
+
+export const SetCalendarFeedResponse = zod.object({
+  "defaultAvailableMinutes": zod.number(),
+  "blockedWeekdays": zod.array(zod.number()),
+  "preferredTime": zod.enum(['morning', 'afternoon', 'evening']),
+  "calendarUrl": zod.union([zod.string(),zod.null()])
 })
 
 

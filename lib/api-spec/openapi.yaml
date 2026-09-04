@@ -481,6 +481,30 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /settings/calendar-feed:
+    post:
+      operationId: setCalendarFeed
+      tags: [settings]
+      summary: Turn the iCalendar feed on or off (on again rotates the URL)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetCalendarFeedInput"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserSettings"
+        "401":
+          description: Not signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /planner/dashboard:
     get:
       operationId: getPlannerDashboard
@@ -1041,7 +1065,18 @@ components:
         preferredTime:
           type: string
           enum: [morning, afternoon, evening]
-      required: [defaultAvailableMinutes, blockedWeekdays, preferredTime]
+        calendarUrl:
+          oneOf:
+            - type: string
+            - type: "null"
+      required:
+        [defaultAvailableMinutes, blockedWeekdays, preferredTime, calendarUrl]
+    SetCalendarFeedInput:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+      required: [enabled]
     UserSettingsInput:
       type: object
       properties:

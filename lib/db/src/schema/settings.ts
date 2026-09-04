@@ -25,6 +25,10 @@ export const userSettingsTable = pgTable("user_settings", {
   // When study sessions start each day: "morning" | "afternoon" | "evening".
   preferredTime: text("preferred_time").notNull().default("afternoon"),
 
+  // Unguessable token in the read-only iCalendar feed URL
+  // (GET /calendar/<token>.ics). Null until the user turns the feed on.
+  calendarToken: text("calendar_token"),
+
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
