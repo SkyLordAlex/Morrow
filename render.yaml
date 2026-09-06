@@ -41,6 +41,14 @@ services:
         sync: false # optional — enables Apple sign-in
       - key: ADMIN_EMAILS
         sync: false # optional — comma-separated admin emails
+      - key: GMAIL_USER
+        sync: false # optional — Gmail address for password-reset emails
+      - key: GMAIL_APP_PASSWORD
+        sync: false # optional — 16-char Google App Password (needs 2FA on)
+      - key: EMAIL_FROM_NAME
+        sync: false # optional — "From" display name, defaults to "Morrow"
+      - key: WEB_APP_URL
+        sync: false # optional — reset-link base; defaults to the request Origin
 
   - type: web
     name: morrow-web

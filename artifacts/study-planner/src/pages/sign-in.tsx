@@ -3,6 +3,7 @@ import { Link } from 'wouter';
 import { Leaf, Loader2, Star } from 'lucide-react';
 import {
   getListReviewHighlightsQueryKey,
+  useForgotPassword,
   useListReviewHighlights,
 } from '@workspace/api-client-react';
 import { Button } from '@/components/ui/button';
@@ -28,7 +29,7 @@ function errorMessage(error: unknown): string {
   return 'Something went wrong. Try again.';
 }
 
-type Mode = 'signin' | 'register';
+type Mode = 'signin' | 'register' | 'forgot';
 
 function SocialProof() {
   const query = useListReviewHighlights({
@@ -83,12 +84,20 @@ function SocialProof() {
 export default function SignIn() {
   const { signInWithPassword, registerAccount, signInWithGoogle, signInWithApple } =
     useAuth();
+  const forgotPassword = useForgotPassword();
   const [mode, setMode] = useState<Mode>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
+
+  const goForgot = () => {
+    setMode('forgot');
+    setError(null);
+    setForgotSent(false);
+  };
 
   const run = async (action: () => Promise<void>) => {
     setBusy(true);
@@ -104,6 +113,17 @@ export default function SignIn() {
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (busy) return;
+    if (mode === 'forgot') {
+      setError(null);
+      forgotPassword.mutate(
+        { data: { email: email.trim() } },
+        {
+          onSuccess: () => setForgotSent(true),
+          onError: (caught) => setError(errorMessage(caught)),
+        },
+      );
+      return;
+    }
     void run(() =>
       mode === 'signin'
         ? signInWithPassword(email.trim(), password)
@@ -121,16 +141,43 @@ export default function SignIn() {
             <Leaf className="h-5 w-5" strokeWidth={2.5} />
           </span>
           <h1 className="mt-4 font-serif text-[32px] leading-none text-foreground">
-            {mode === 'signin' ? 'Welcome back' : 'Create your account'}
+            {mode === 'signin'
+              ? 'Welcome back'
+              : mode === 'register'
+                ? 'Create your account'
+                : 'Reset your password'}
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
             {mode === 'signin'
               ? 'Sign in to pick up your plan.'
-              : 'A few small steps, kept in one place.'}
+              : mode === 'register'
+                ? 'A few small steps, kept in one place.'
+                : "Enter your email and we'll send a reset link."}
           </p>
         </div>
 
         <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-sm">
+          {mode === 'forgot' && forgotSent ? (
+            <div className="text-center" data-testid="text-forgot-sent">
+              <p className="text-sm leading-6 text-muted-foreground">
+                If an account exists for{' '}
+                <span className="font-semibold text-foreground">
+                  {email.trim()}
+                </span>
+                , a reset link is on its way. It expires in an hour.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setMode('signin');
+                  setForgotSent(false);
+                }}
+                className="mt-4 text-xs font-bold text-primary hover:underline"
+              >
+                Back to sign in
+              </button>
+            </div>
+          ) : (
           <form onSubmit={submit} className="space-y-4">
             {mode === 'register' ? (
               <div className="space-y-1.5">
@@ -160,20 +207,34 @@ export default function SignIn() {
               />
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                required
-                minLength={8}
-                autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                data-testid="input-password"
-                placeholder={mode === 'register' ? 'At least 8 characters' : '••••••••'}
-              />
-            </div>
+            {mode !== 'forgot' ? (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Password</Label>
+                  {mode === 'signin' ? (
+                    <button
+                      type="button"
+                      onClick={goForgot}
+                      data-testid="button-forgot-password"
+                      className="text-[11px] font-bold text-primary hover:underline"
+                    >
+                      Forgot password?
+                    </button>
+                  ) : null}
+                </div>
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  minLength={8}
+                  autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  data-testid="input-password"
+                  placeholder={mode === 'register' ? 'At least 8 characters' : '••••••••'}
+                />
+              </div>
+            ) : null}
 
             {error ? (
               <p
@@ -186,16 +247,23 @@ export default function SignIn() {
 
             <Button
               type="submit"
-              disabled={busy}
+              disabled={busy || forgotPassword.isPending}
               className="w-full"
               data-testid="button-submit-auth"
             >
-              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              {mode === 'signin' ? 'Sign in' : 'Create account'}
+              {busy || forgotPassword.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : null}
+              {mode === 'signin'
+                ? 'Sign in'
+                : mode === 'register'
+                  ? 'Create account'
+                  : 'Send reset link'}
             </Button>
           </form>
+          )}
 
-          {hasSocial ? (
+          {mode !== 'forgot' && hasSocial ? (
             <>
               <div className="my-5 flex items-center gap-3 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                 <span className="h-px flex-1 bg-border" />
@@ -221,12 +289,17 @@ export default function SignIn() {
         </div>
 
         <p className="mt-5 text-center text-sm text-muted-foreground">
-          {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
+          {mode === 'forgot'
+            ? 'Remembered it? '
+            : mode === 'signin'
+              ? "Don't have an account? "
+              : 'Already have an account? '}
           <button
             type="button"
             onClick={() => {
-              setMode(mode === 'signin' ? 'register' : 'signin');
+              setMode(mode === 'register' ? 'signin' : mode === 'signin' ? 'register' : 'signin');
               setError(null);
+              setForgotSent(false);
             }}
             data-testid="button-toggle-auth-mode"
             className="font-bold text-primary hover:underline"

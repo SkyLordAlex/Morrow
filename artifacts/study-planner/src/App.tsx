@@ -14,6 +14,7 @@ import Admin from '@/pages/admin';
 import Settings from '@/pages/settings';
 import SignIn from '@/pages/sign-in';
 import SharedPlan from '@/pages/shared-plan';
+import ResetPassword from '@/pages/reset-password';
 import { Privacy, Terms } from '@/pages/legal';
 import {
   Route,
@@ -58,6 +59,7 @@ function AuthGate() {
   }
   if (location === '/terms') return <Terms />;
   if (location === '/privacy') return <Privacy />;
+  if (location === '/reset-password') return <ResetPassword />;
 
   if (status === 'loading') {
     return (

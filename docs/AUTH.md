@@ -64,9 +64,23 @@ Server-verified, bearer-token auth.
 | POST | `/api/auth/login` | — | `{email,password}` → `{token,user}` |
 | POST | `/api/auth/apple` | — | `{identityToken}` → `{token,user}` |
 | POST | `/api/auth/google` | — | `{idToken}` → `{token,user}` |
-| GET | `/api/auth/session` | bearer | → `user` (includes `role`) |
+| GET | `/api/auth/session` | bearer | → `user` (includes `role`, `hasPassword`, `providers`) |
 | POST | `/api/auth/logout` | bearer | → `204` (revokes current token) |
+| PATCH | `/api/auth/account` | bearer | `{displayName}` → `user` |
+| POST | `/api/auth/password` | bearer | `{currentPassword?,newPassword}` → `204` (set/change password) |
+| POST | `/api/auth/forgot-password` | — | `{email}` → `204` always (emails a reset link if the account exists) |
+| POST | `/api/auth/reset-password` | — | `{token,newPassword}` → `204` (consumes a one-hour, single-use token; revokes all that user's sessions) |
 | DELETE | `/api/auth/account` | bearer | → `204` (deletes user; cascade wipes identities, sessions, planner rows) |
+
+### Password reset
+
+`forgot-password` mints a token in `password_reset_tokens` (SHA-256 hashed,
+one hour, single-use), builds `<origin>/reset-password?token=…`, and emails it
+via **Gmail SMTP** (`lib/email.ts`, nodemailer). Set `GMAIL_USER` +
+`GMAIL_APP_PASSWORD` (a Google App Password — free, needs 2-Step Verification).
+Unset → the link is written to the server log instead, so the flow is still
+testable. The link base is the request `Origin` unless `WEB_APP_URL` overrides
+it.
 
 ### Roles
 

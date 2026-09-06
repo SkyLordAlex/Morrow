@@ -73,6 +73,27 @@ export const sessionsTable = pgTable(
   (table) => [uniqueIndex("sessions_token_hash_unique").on(table.tokenHash)],
 );
 
+// Single-use password-reset tokens. Like sessions, only the SHA-256 hash is
+// stored. `usedAt` is set when the token is consumed so a link works once.
+export const passwordResetTokensTable = pgTable(
+  "password_reset_tokens",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => usersTable.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+  },
+  (table) => [
+    uniqueIndex("password_reset_tokens_hash_unique").on(table.tokenHash),
+  ],
+);
+
 export const insertUserSchema = createInsertSchema(usersTable).omit({
   id: true,
 });
@@ -86,5 +107,7 @@ export const insertSessionSchema = createInsertSchema(sessionsTable).omit({
 export type User = typeof usersTable.$inferSelect;
 export type Identity = typeof identitiesTable.$inferSelect;
 export type Session = typeof sessionsTable.$inferSelect;
+export type PasswordResetToken =
+  typeof passwordResetTokensTable.$inferSelect;
 
 export type AuthProvider = "apple" | "google";

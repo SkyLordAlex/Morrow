@@ -154,6 +154,46 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /auth/forgot-password:
+    post:
+      operationId: forgotPassword
+      tags: [auth]
+      summary: Email a password-reset link (always succeeds — no account enumeration)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForgotPasswordInput"
+      responses:
+        "204":
+          description: Handled
+        "400":
+          description: Invalid email
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /auth/reset-password:
+    post:
+      operationId: resetPassword
+      tags: [auth]
+      summary: Set a new password using a reset token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordInput"
+      responses:
+        "204":
+          description: Password updated
+        "400":
+          description: Invalid token or password
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /auth/password:
     post:
       operationId: changePassword
@@ -867,6 +907,23 @@ components:
           type: string
           minLength: 8
       required: [newPassword]
+    ForgotPasswordInput:
+      type: object
+      properties:
+        email:
+          type: string
+          minLength: 3
+      required: [email]
+    ResetPasswordInput:
+      type: object
+      properties:
+        token:
+          type: string
+          minLength: 1
+        newPassword:
+          type: string
+          minLength: 8
+      required: [token, newPassword]
     AppleAuthInput:
       type: object
       properties:

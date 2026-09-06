@@ -1,5 +1,20 @@
 # Changes from the original upload
 
+## Forgot password (this pass)
+
+"Forgot password?" on the sign-in screen → enter your email → a reset link
+arrives → set a new password at `/reset-password?token=…`.
+
+- New `password_reset_tokens` table (SHA-256 hashed, one hour, single-use).
+  **`db push` again.**
+- `POST /auth/forgot-password` (always 204 — no account enumeration) and
+  `POST /auth/reset-password` (consumes the token, updates the hash, revokes
+  all that user's sessions).
+- Email over **Gmail SMTP** (`lib/email.ts`, nodemailer). Set `GMAIL_USER` +
+  `GMAIL_APP_PASSWORD` (a free Google App Password — needs 2-Step Verification).
+  Unset → the link is logged instead, so the flow still works for testing.
+  Reset-link base is the request Origin, or `WEB_APP_URL` if set.
+
 ## Growth: shareable plans, review nudge, social proof (this pass)
 
 Three things so the app spreads on its own:

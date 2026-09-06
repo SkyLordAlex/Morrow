@@ -126,6 +126,36 @@ export const GetAuthSessionResponse = zod.object({
 
 
 /**
+ * @summary Email a password-reset link (always succeeds — no account enumeration)
+ */
+export const forgotPasswordBodyEmailMin = 3;
+
+
+
+export const ForgotPasswordBody = zod.object({
+  "email": zod.string().min(forgotPasswordBodyEmailMin)
+})
+
+export const ForgotPasswordResponse = zod.void()
+
+
+/**
+ * @summary Set a new password using a reset token
+ */
+
+export const resetPasswordBodyNewPasswordMin = 8;
+
+
+
+export const ResetPasswordBody = zod.object({
+  "token": zod.string().min(1),
+  "newPassword": zod.string().min(resetPasswordBodyNewPasswordMin)
+})
+
+export const ResetPasswordResponse = zod.void()
+
+
+/**
  * @summary Set or change the signed-in user's password
  */
 export const changePasswordBodyNewPasswordMin = 8;

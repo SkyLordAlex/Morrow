@@ -1,4 +1,4 @@
-import { Router, type IRouter } from "express";
+import { Router, type IRouter, type Request } from "express";
 import { eq } from "drizzle-orm";
 import {
   AuthAppleBody,
@@ -7,13 +7,20 @@ import {
   LoginBody,
   LoginResponse,
   ChangePasswordBody,
+  ForgotPasswordBody,
   RegisterBody,
   RegisterResponse,
+  ResetPasswordBody,
   UpdateAccountBody,
   UpdateAccountResponse,
 } from "@workspace/api-zod";
 import { db, usersTable } from "@workspace/db";
 import { hashPassword, verifyPassword } from "../lib/auth/password.js";
+import {
+  consumeResetToken,
+  createResetToken,
+} from "../lib/auth/password-reset.js";
+import { sendMail } from "../lib/email.js";
 import {
   AuthConfigError,
   verifyAppleIdentityToken,
@@ -89,6 +96,87 @@ router.post("/auth/login", async (req, res, next) => {
   } catch (error) {
     if (isZodError(error)) {
       res.status(400).json({ error: "Email and password are required." });
+      return;
+    }
+    next(error);
+  }
+});
+
+function resetLinkBase(req: Request): string {
+  const configured = process.env["WEB_APP_URL"]?.replace(/\/+$/, "");
+  if (configured) return configured;
+  const origin = req.get("origin");
+  if (origin) return origin.replace(/\/+$/, "");
+  return "";
+}
+
+// Always 204, whether or not the email exists — no account enumeration. When
+// the account exists and has an email we can reach, a reset link is sent.
+router.post("/auth/forgot-password", async (req, res, next) => {
+  try {
+    const { email } = ForgotPasswordBody.parse(req.body);
+    const user = await findUserByEmail(email);
+
+    if (user) {
+      const token = await createResetToken(user.id);
+      const base = resetLinkBase(req);
+      const link = `${base}/reset-password?token=${token}`;
+      const name = user.displayName?.trim() || "there";
+      await sendMail({
+        to: user.email,
+        subject: "Reset your Morrow password",
+        text: [
+          `Hi ${name},`,
+          "",
+          "Use this link to set a new password. It expires in 1 hour.",
+          "",
+          link,
+          "",
+          "If you didn't ask for this, you can ignore this email — your password won't change.",
+        ].join("\n"),
+        html: [
+          `<p>Hi ${name},</p>`,
+          "<p>Use this link to set a new password. It expires in 1 hour.</p>",
+          `<p><a href="${link}">Reset your password</a></p>`,
+          "<p style=\"color:#667\">If you didn't ask for this, you can ignore this email — your password won't change.</p>",
+        ].join(""),
+      });
+    }
+
+    res.status(204).end();
+  } catch (error) {
+    if (isZodError(error)) {
+      res.status(400).json({ error: "Enter a valid email address." });
+      return;
+    }
+    next(error);
+  }
+});
+
+router.post("/auth/reset-password", async (req, res, next) => {
+  try {
+    const { token, newPassword } = ResetPasswordBody.parse(req.body);
+    const userId = await consumeResetToken(token);
+    if (userId === null) {
+      res
+        .status(400)
+        .json({ error: "This reset link is invalid or has expired." });
+      return;
+    }
+
+    await db
+      .update(usersTable)
+      .set({ passwordHash: await hashPassword(newPassword) })
+      .where(eq(usersTable.id, userId));
+    // Sign out everywhere — a reset usually means "someone else had access".
+    await revokeAllForUser(userId);
+
+    res.status(204).end();
+  } catch (error) {
+    if (isZodError(error)) {
+      res
+        .status(400)
+        .json({ error: "Choose a new password of at least 8 characters." });
       return;
     }
     next(error);
