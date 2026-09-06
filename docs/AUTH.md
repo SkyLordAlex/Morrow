@@ -76,11 +76,32 @@ Server-verified, bearer-token auth.
 
 `forgot-password` mints a token in `password_reset_tokens` (SHA-256 hashed,
 one hour, single-use), builds `<origin>/reset-password?token=…`, and emails it
-via **Gmail SMTP** (`lib/email.ts`, nodemailer). Set `GMAIL_USER` +
-`GMAIL_APP_PASSWORD` (a Google App Password — free, needs 2-Step Verification).
-Unset → the link is written to the server log instead, so the flow is still
-testable. The link base is the request `Origin` unless `WEB_APP_URL` overrides
-it.
+via the **Gmail REST API** over HTTPS (`lib/email.ts`) — SMTP is blocked on
+Render's free tier. Sends from a real Gmail account, free, ~500/day.
+
+Unset any of the four `GMAIL_*` vars → the link is written to the server log
+instead, so the flow is still testable. The link base is the request `Origin`
+unless `WEB_APP_URL` overrides it.
+
+**One-time OAuth setup:**
+
+1. [Google Cloud Console](https://console.cloud.google.com/) → create/pick a
+   project → **APIs & Services**:
+   - **Enable APIs** → enable **Gmail API**.
+   - **OAuth consent screen** → *External* → add the sending Gmail address
+     under **Test users** → add scope
+     `https://www.googleapis.com/auth/gmail.send`.
+   - **Credentials** → **Create credentials** → **OAuth client ID** → type
+     **Desktop app**. Copy the client ID and secret.
+2. In `artifacts/api-server/.env` set `GMAIL_USER`, `GMAIL_CLIENT_ID`,
+   `GMAIL_CLIENT_SECRET`, then run:
+   ```
+   pnpm --filter @workspace/api-server run gmail:token
+   ```
+   A browser opens; sign in as the sending account and approve. Copy the
+   printed `GMAIL_REFRESH_TOKEN`.
+3. Set all four `GMAIL_*` vars (plus optional `EMAIL_FROM_NAME`) in the API
+   server's environment — locally in `.env`, in production on the host.
 
 ### Roles
 

@@ -10,10 +10,11 @@ arrives → set a new password at `/reset-password?token=…`.
 - `POST /auth/forgot-password` (always 204 — no account enumeration) and
   `POST /auth/reset-password` (consumes the token, updates the hash, revokes
   all that user's sessions).
-- Email over **Gmail SMTP** (`lib/email.ts`, nodemailer). Set `GMAIL_USER` +
-  `GMAIL_APP_PASSWORD` (a free Google App Password — needs 2-Step Verification).
-  Unset → the link is logged instead, so the flow still works for testing.
-  Reset-link base is the request Origin, or `WEB_APP_URL` if set.
+- Email via the **Gmail REST API over HTTPS** (`lib/email.ts`) — SMTP is
+  blocked on Render's free tier. OAuth `GMAIL_USER` / `GMAIL_CLIENT_ID` /
+  `GMAIL_CLIENT_SECRET` / `GMAIL_REFRESH_TOKEN`; the last comes from
+  `pnpm --filter @workspace/api-server run gmail:token`. Unset → the link is
+  logged instead. Reset-link base is the request Origin, or `WEB_APP_URL`.
 
 ## Growth: shareable plans, review nudge, social proof (this pass)
 

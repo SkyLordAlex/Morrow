@@ -42,9 +42,13 @@ services:
       - key: ADMIN_EMAILS
         sync: false # optional — comma-separated admin emails
       - key: GMAIL_USER
-        sync: false # optional — Gmail address for password-reset emails
-      - key: GMAIL_APP_PASSWORD
-        sync: false # optional — 16-char Google App Password (needs 2FA on)
+        sync: false # optional — Gmail address that sends password-reset email
+      - key: GMAIL_CLIENT_ID
+        sync: false # optional — OAuth "Desktop app" client id (Gmail API)
+      - key: GMAIL_CLIENT_SECRET
+        sync: false # optional — its client secret
+      - key: GMAIL_REFRESH_TOKEN
+        sync: false # optional — from `pnpm --filter @workspace/api-server run gmail:token`
       - key: EMAIL_FROM_NAME
         sync: false # optional — "From" display name, defaults to "Morrow"
       - key: WEB_APP_URL
