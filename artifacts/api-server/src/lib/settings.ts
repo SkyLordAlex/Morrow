@@ -126,12 +126,7 @@ export async function setCalendarFeed(
 export async function findUserIdByCalendarToken(
   token: string,
 ): Promise<number | null> {
-  if (!token) return null;
-  const [row] = await db
-    .select({ userId: userSettingsTable.userId })
-    .from(userSettingsTable)
-    .where(eq(userSettingsTable.calendarToken, token));
-  return row?.userId ?? null;
+  return findUserIdByToken("calendarToken", token);
 }
 
 /** Create or clear the public plan-share link. Re-enabling rotates it. */
@@ -153,10 +148,26 @@ export async function setShareLink(
 export async function findUserIdByShareToken(
   token: string,
 ): Promise<number | null> {
+  return findUserIdByToken("shareToken", token);
+}
+
+async function findUserIdByToken(
+  column: "calendarToken" | "shareToken",
+  token: string,
+): Promise<number | null> {
   if (!token) return null;
-  const [row] = await db
-    .select({ userId: userSettingsTable.userId })
-    .from(userSettingsTable)
-    .where(eq(userSettingsTable.shareToken, token));
-  return row?.userId ?? null;
+  try {
+    const [row] = await db
+      .select({ userId: userSettingsTable.userId })
+      .from(userSettingsTable)
+      .where(eq(userSettingsTable[column], token));
+    return row?.userId ?? null;
+  } catch (error) {
+    // Column missing (deployed ahead of `db push`) — treat as "no such link".
+    logger.warn(
+      { reason: error instanceof Error ? error.message : String(error) },
+      `Could not look up ${column}; treating as unknown`,
+    );
+    return null;
+  }
 }
