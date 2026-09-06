@@ -115,32 +115,39 @@ function resetLinkBase(req: Request): string {
 router.post("/auth/forgot-password", async (req, res, next) => {
   try {
     const { email } = ForgotPasswordBody.parse(req.body);
-    const user = await findUserByEmail(email);
 
-    if (user) {
-      const token = await createResetToken(user.id);
-      const base = resetLinkBase(req);
-      const link = `${base}/reset-password?token=${token}`;
-      const name = user.displayName?.trim() || "there";
-      await sendMail({
-        to: user.email,
-        subject: "Reset your Morrow password",
-        text: [
-          `Hi ${name},`,
-          "",
-          "Use this link to set a new password. It expires in 1 hour.",
-          "",
-          link,
-          "",
-          "If you didn't ask for this, you can ignore this email — your password won't change.",
-        ].join("\n"),
-        html: [
-          `<p>Hi ${name},</p>`,
-          "<p>Use this link to set a new password. It expires in 1 hour.</p>",
-          `<p><a href="${link}">Reset your password</a></p>`,
-          "<p style=\"color:#667\">If you didn't ask for this, you can ignore this email — your password won't change.</p>",
-        ].join(""),
-      });
+    // Everything after validation is best-effort: a missing table (deployed
+    // ahead of `db push`), an SMTP hiccup, or an unknown address must all look
+    // identical to the caller — a plain 204.
+    try {
+      const user = await findUserByEmail(email);
+      if (user) {
+        const token = await createResetToken(user.id);
+        const base = resetLinkBase(req);
+        const link = `${base}/reset-password?token=${token}`;
+        const name = user.displayName?.trim() || "there";
+        await sendMail({
+          to: user.email,
+          subject: "Reset your Morrow password",
+          text: [
+            `Hi ${name},`,
+            "",
+            "Use this link to set a new password. It expires in 1 hour.",
+            "",
+            link,
+            "",
+            "If you didn't ask for this, you can ignore this email — your password won't change.",
+          ].join("\n"),
+          html: [
+            `<p>Hi ${name},</p>`,
+            "<p>Use this link to set a new password. It expires in 1 hour.</p>",
+            `<p><a href="${link}">Reset your password</a></p>`,
+            "<p style=\"color:#667\">If you didn't ask for this, you can ignore this email — your password won't change.</p>",
+          ].join(""),
+        });
+      }
+    } catch (inner) {
+      logger.error({ err: inner }, "forgot-password: could not send reset link");
     }
 
     res.status(204).end();

@@ -40,22 +40,27 @@ export async function consumeResetToken(
 ): Promise<number | null> {
   if (!token) return null;
 
-  const [row] = await db
-    .select()
-    .from(passwordResetTokensTable)
-    .where(eq(passwordResetTokensTable.tokenHash, hash(token)))
-    .limit(1);
+  try {
+    const [row] = await db
+      .select()
+      .from(passwordResetTokensTable)
+      .where(eq(passwordResetTokensTable.tokenHash, hash(token)))
+      .limit(1);
 
-  if (!row || row.usedAt || row.expiresAt.getTime() <= Date.now()) {
+    if (!row || row.usedAt || row.expiresAt.getTime() <= Date.now()) {
+      return null;
+    }
+
+    await db
+      .update(passwordResetTokensTable)
+      .set({ usedAt: new Date() })
+      .where(eq(passwordResetTokensTable.id, row.id));
+
+    return row.userId;
+  } catch {
+    // Table missing (deployed ahead of `db push`) — no valid token can exist.
     return null;
   }
-
-  await db
-    .update(passwordResetTokensTable)
-    .set({ usedAt: new Date() })
-    .where(eq(passwordResetTokensTable.id, row.id));
-
-  return row.userId;
 }
 
 /** Housekeeping: drop expired rows. */
