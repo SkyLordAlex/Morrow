@@ -11,6 +11,7 @@ export type ResolvedSettings = {
   blockedWeekdays: number[];
   preferredTime: PreferredTime;
   calendarToken: string | null;
+  shareToken: string | null;
 };
 
 export const DEFAULT_SETTINGS: ResolvedSettings = {
@@ -18,6 +19,7 @@ export const DEFAULT_SETTINGS: ResolvedSettings = {
   blockedWeekdays: [],
   preferredTime: "afternoon",
   calendarToken: null,
+  shareToken: null,
 };
 
 // The clock hour study sessions start at for each preference.
@@ -54,6 +56,7 @@ export async function getUserSettings(
       blockedWeekdays: sanitizeBlockedWeekdays(row.blockedWeekdays),
       preferredTime: coercePreferredTime(row.preferredTime),
       calendarToken: row.calendarToken ?? null,
+      shareToken: row.shareToken ?? null,
     };
   } catch (error) {
     // The most likely cause is the `user_settings` table not existing yet
@@ -87,6 +90,7 @@ export async function saveUserSettings(
         ? current.preferredTime
         : coercePreferredTime(patch.preferredTime),
     calendarToken: current.calendarToken,
+    shareToken: current.shareToken,
   };
 
   await db
@@ -127,5 +131,32 @@ export async function findUserIdByCalendarToken(
     .select({ userId: userSettingsTable.userId })
     .from(userSettingsTable)
     .where(eq(userSettingsTable.calendarToken, token));
+  return row?.userId ?? null;
+}
+
+/** Create or clear the public plan-share link. Re-enabling rotates it. */
+export async function setShareLink(
+  userId: number,
+  enabled: boolean,
+): Promise<string | null> {
+  const token = enabled ? randomBytes(18).toString("base64url") : null;
+  await db
+    .insert(userSettingsTable)
+    .values({ userId, shareToken: token, updatedAt: new Date() })
+    .onConflictDoUpdate({
+      target: userSettingsTable.userId,
+      set: { shareToken: token, updatedAt: new Date() },
+    });
+  return token;
+}
+
+export async function findUserIdByShareToken(
+  token: string,
+): Promise<number | null> {
+  if (!token) return null;
+  const [row] = await db
+    .select({ userId: userSettingsTable.userId })
+    .from(userSettingsTable)
+    .where(eq(userSettingsTable.shareToken, token));
   return row?.userId ?? null;
 }

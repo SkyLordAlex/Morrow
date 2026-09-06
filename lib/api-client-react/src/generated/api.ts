@@ -33,11 +33,14 @@ import type {
   PlannerSessionList,
   RegisterInput,
   Review,
+  ReviewHighlights,
   ReviewInput,
   ReviewSummary,
   SessionRescheduleInput,
   SetCalendarFeedInput,
   SetRoleInput,
+  SetShareLinkInput,
+  SharedPlan,
   StudyPlan,
   StudyPlanInput,
   StudySession,
@@ -1604,6 +1607,231 @@ export const useSetCalendarFeed = <TError = ErrorType<ErrorResponse>,
       > => {
       return useMutation(getSetCalendarFeedMutationOptions(options));
     }
+
+export const getSetShareLinkUrl = () => {
+
+
+
+
+  return `/api/settings/share-link`
+}
+
+/**
+ * @summary Create or revoke the public plan-share link (on again rotates it)
+ */
+export const setShareLink = async (setShareLinkInput: SetShareLinkInput, options?: Parameters<typeof customFetch>[1]): Promise<UserSettings> => {
+
+  return customFetch<UserSettings>(getSetShareLinkUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(setShareLinkInput)
+  }
+);}
+
+
+
+
+
+export const getSetShareLinkMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setShareLink>>, TError,{data: BodyType<SetShareLinkInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof setShareLink>>, TError,{data: BodyType<SetShareLinkInput>}, TContext> => {
+
+const mutationKey = ['setShareLink'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setShareLink>>, {data: BodyType<SetShareLinkInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  setShareLink(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetShareLinkMutationResult = NonNullable<Awaited<ReturnType<typeof setShareLink>>>
+    export type SetShareLinkMutationBody = BodyType<SetShareLinkInput>
+    export type SetShareLinkMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create or revoke the public plan-share link (on again rotates it)
+ */
+export const useSetShareLink = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setShareLink>>, TError,{data: BodyType<SetShareLinkInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof setShareLink>>,
+        TError,
+        {data: BodyType<SetShareLinkInput>},
+        TContext
+      > => {
+      return useMutation(getSetShareLinkMutationOptions(options));
+    }
+
+export const getGetSharedPlanUrl = (token: string,) => {
+
+
+
+
+  return `/api/shared/${token}`
+}
+
+/**
+ * @summary Public read-only view of a shared plan
+ */
+export const getSharedPlan = async (token: string, options?: Parameters<typeof customFetch>[1]): Promise<SharedPlan> => {
+
+  return customFetch<SharedPlan>(getGetSharedPlanUrl(token),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetSharedPlanQueryKey = (token: string,) => {
+    return [
+    `/api/shared/${token}`
+    ] as const;
+    }
+
+
+export const getGetSharedPlanQueryOptions = <TData = Awaited<ReturnType<typeof getSharedPlan>>, TError = ErrorType<ErrorResponse>>(token: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSharedPlan>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSharedPlanQueryKey(token);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSharedPlan>>> = ({ signal }) => getSharedPlan(token, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: token !== null && token !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSharedPlan>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetSharedPlanQueryResult = NonNullable<Awaited<ReturnType<typeof getSharedPlan>>>
+export type GetSharedPlanQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Public read-only view of a shared plan
+ */
+
+export function useGetSharedPlan<TData = Awaited<ReturnType<typeof getSharedPlan>>, TError = ErrorType<ErrorResponse>>(
+ token: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSharedPlan>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetSharedPlanQueryOptions(token,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListReviewHighlightsUrl = () => {
+
+
+
+
+  return `/api/reviews/highlights`
+}
+
+/**
+ * @summary Public rating summary and a few quotable reviews
+ */
+export const listReviewHighlights = async ( options?: Parameters<typeof customFetch>[1]): Promise<ReviewHighlights> => {
+
+  return customFetch<ReviewHighlights>(getListReviewHighlightsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListReviewHighlightsQueryKey = () => {
+    return [
+    `/api/reviews/highlights`
+    ] as const;
+    }
+
+
+export const getListReviewHighlightsQueryOptions = <TData = Awaited<ReturnType<typeof listReviewHighlights>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listReviewHighlights>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListReviewHighlightsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listReviewHighlights>>> = ({ signal }) => listReviewHighlights({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listReviewHighlights>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListReviewHighlightsQueryResult = NonNullable<Awaited<ReturnType<typeof listReviewHighlights>>>
+export type ListReviewHighlightsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Public rating summary and a few quotable reviews
+ */
+
+export function useListReviewHighlights<TData = Awaited<ReturnType<typeof listReviewHighlights>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listReviewHighlights>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListReviewHighlightsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getGetPlannerDashboardUrl = () => {
 

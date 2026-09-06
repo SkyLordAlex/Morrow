@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { desc, eq } from "drizzle-orm";
 import {
+  ListReviewHighlightsResponse,
   ListReviewsResponse,
   UpsertMyReviewBody,
   UpsertMyReviewResponse,
@@ -65,6 +66,40 @@ router.get("/reviews", requireAuth, async (req, res, next) => {
     const myReview = reviews.find((review) => review.mine) ?? null;
 
     res.json(ListReviewsResponse.parse({ average, count, reviews, myReview }));
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Public: rating summary + a few quotable reviews, for the sign-in page.
+router.get("/reviews/highlights", async (_req, res, next) => {
+  try {
+    const rows = await db
+      .select({
+        rating: reviewsTable.rating,
+        body: reviewsTable.body,
+        authorName: usersTable.displayName,
+      })
+      .from(reviewsTable)
+      .innerJoin(usersTable, eq(usersTable.id, reviewsTable.userId))
+      .orderBy(desc(reviewsTable.updatedAt));
+
+    const count = rows.length;
+    const average = count
+      ? Math.round(
+          (rows.reduce((sum, row) => sum + row.rating, 0) / count) * 10,
+        ) / 10
+      : 0;
+    const highlights = rows
+      .filter((row) => row.rating >= 4 && (row.body?.trim().length ?? 0) >= 8)
+      .slice(0, 3)
+      .map((row) => ({
+        rating: row.rating,
+        body: row.body?.trim() ?? "",
+        authorName: row.authorName ?? null,
+      }));
+
+    res.json(ListReviewHighlightsResponse.parse({ average, count, highlights }));
   } catch (error) {
     next(error);
   }

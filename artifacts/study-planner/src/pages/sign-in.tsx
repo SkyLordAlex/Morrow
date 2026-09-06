@@ -1,6 +1,10 @@
 import { useState, type FormEvent } from 'react';
 import { Link } from 'wouter';
-import { Leaf, Loader2 } from 'lucide-react';
+import { Leaf, Loader2, Star } from 'lucide-react';
+import {
+  getListReviewHighlightsQueryKey,
+  useListReviewHighlights,
+} from '@workspace/api-client-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,6 +29,56 @@ function errorMessage(error: unknown): string {
 }
 
 type Mode = 'signin' | 'register';
+
+function SocialProof() {
+  const query = useListReviewHighlights({
+    query: { queryKey: getListReviewHighlightsQueryKey() },
+  });
+  const data = query.data;
+  if (!data || data.count === 0) return null;
+
+  return (
+    <div className="mt-8" data-testid="section-social-proof">
+      <div className="flex items-center justify-center gap-2 text-sm">
+        <span className="flex items-center gap-0.5">
+          {[1, 2, 3, 4, 5].map((n) => (
+            <Star
+              key={n}
+              className={`h-3.5 w-3.5 ${
+                n <= Math.round(data.average)
+                  ? 'fill-secondary text-secondary'
+                  : 'fill-transparent text-muted-foreground/40'
+              }`}
+            />
+          ))}
+        </span>
+        <span className="font-bold text-foreground">
+          {data.average.toFixed(1)}
+        </span>
+        <span className="text-muted-foreground">
+          · {data.count} review{data.count === 1 ? '' : 's'}
+        </span>
+      </div>
+      {data.highlights.length > 0 ? (
+        <div className="mt-4 space-y-2.5">
+          {data.highlights.slice(0, 2).map((review, index) => (
+            <blockquote
+              key={index}
+              className="rounded-xl border border-border/70 bg-card px-4 py-3 text-xs leading-5 text-muted-foreground"
+            >
+              “{review.body}”
+              {review.authorName ? (
+                <span className="mt-1 block font-semibold text-foreground/70">
+                  — {review.authorName}
+                </span>
+              ) : null}
+            </blockquote>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 export default function SignIn() {
   const { signInWithPassword, registerAccount, signInWithGoogle, signInWithApple } =
@@ -180,6 +234,8 @@ export default function SignIn() {
             {mode === 'signin' ? 'Sign up' : 'Sign in'}
           </button>
         </p>
+
+        <SocialProof />
 
         <p className="mt-6 text-center text-[11px] leading-4 text-muted-foreground/80">
           By continuing you agree to our{' '}

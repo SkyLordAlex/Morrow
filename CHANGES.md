@@ -1,5 +1,24 @@
 # Changes from the original upload
 
+## Growth: shareable plans, review nudge, social proof (this pass)
+
+Three things so the app spreads on its own:
+
+- **Shareable plan link.** Settings → Share → "Create share link" gives a
+  read-only public page (`/s/<token>`) showing what you're working on and
+  what's coming up, ending in a "Plan your own week" CTA. New
+  `user_settings.share_token`, `POST /settings/share-link`, and a public
+  `GET /shared/<token>`. **`db push` again.**
+- **In-app review nudge.** After 3 completed sessions, a dismissible card on
+  the dashboard invites a review (stars link to the reviews page). Per-device
+  dismissal.
+- **Social proof on the sign-in page.** Public `GET /reviews/highlights`
+  (rating average + a couple of quotable reviews); shown under the sign-in
+  card when there are any.
+
+Also fixed: a bare "no weekends" clause was becoming a phantom "No weekends"
+assignment instead of just blocking those days.
+
 ## Calendar subscription feed (.ics) (this pass)
 
 Settings → Calendar → **Subscribe from another calendar**: turn on a private

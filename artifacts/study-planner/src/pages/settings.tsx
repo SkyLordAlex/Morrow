@@ -14,6 +14,7 @@ import {
   useChangePassword,
   useGetSettings,
   useSetCalendarFeed,
+  useSetShareLink,
   useUpdateSettings,
 } from '@workspace/api-client-react';
 import { AppShell } from '@/components/app-shell';
@@ -655,6 +656,105 @@ function CalendarFeed() {
   );
 }
 
+function SharePlanSettings() {
+  const queryClient = useQueryClient();
+  const query = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
+  const toggle = useSetShareLink();
+  const [copied, setCopied] = useState(false);
+
+  const token = query.data?.shareToken ?? null;
+  const url = token
+    ? `${window.location.origin}${import.meta.env.BASE_URL.replace(/\/$/, '')}/s/${token}`
+    : null;
+
+  const run = (enabled: boolean) =>
+    toggle.mutate(
+      { data: { enabled } },
+      {
+        onSuccess: () =>
+          queryClient.invalidateQueries({ queryKey: getGetSettingsQueryKey() }),
+      },
+    );
+
+  const copy = () => {
+    if (!url) return;
+    navigator.clipboard?.writeText(url).then(
+      () => {
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 2000);
+      },
+      () => undefined,
+    );
+  };
+
+  return (
+    <section
+      className="rounded-2xl border border-border/80 bg-card p-5 shadow-sm sm:p-6"
+      data-testid="section-share"
+    >
+      <p className="font-mono text-[10px] uppercase tracking-[0.17em] text-muted-foreground">
+        Share
+      </p>
+      <h2 className="mt-1 font-serif text-[24px]">Your plan, as a link</h2>
+      <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
+        A read-only page showing what you&apos;re working on and what&apos;s
+        coming up — drop it in a group chat. No login needed to view it.
+      </p>
+
+      {url ? (
+        <div className="mt-3 space-y-2">
+          <div className="flex items-center gap-2">
+            <input
+              readOnly
+              value={url}
+              onFocus={(event) => event.target.select()}
+              data-testid="input-share-url"
+              className="w-full max-w-md rounded-xl border border-input bg-background px-3 py-2 font-mono text-[11px] outline-none"
+            />
+            <button
+              type="button"
+              onClick={copy}
+              data-testid="button-copy-share-url"
+              className="shrink-0 rounded-xl bg-primary px-3 py-2 text-xs font-extrabold text-primary-foreground"
+            >
+              {copied ? 'Copied' : 'Copy'}
+            </button>
+          </div>
+          <div className="flex items-center gap-4 text-[11px] font-bold">
+            <button
+              type="button"
+              onClick={() => run(true)}
+              disabled={toggle.isPending}
+              className="text-muted-foreground hover:text-foreground disabled:opacity-50"
+            >
+              Reset link
+            </button>
+            <button
+              type="button"
+              onClick={() => run(false)}
+              disabled={toggle.isPending}
+              data-testid="button-disable-share"
+              className="text-muted-foreground hover:text-destructive disabled:opacity-50"
+            >
+              Turn off
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => run(true)}
+          disabled={toggle.isPending}
+          data-testid="button-enable-share"
+          className="mt-3 rounded-xl border border-border px-3.5 py-2.5 text-xs font-extrabold text-foreground hover:bg-muted disabled:opacity-50"
+        >
+          {toggle.isPending ? 'Creating…' : 'Create share link'}
+        </button>
+      )}
+    </section>
+  );
+}
+
 function TimeZoneSettings() {
   const queryClient = useQueryClient();
   const [zone, setZone] = useTimeZone();
@@ -768,6 +868,8 @@ export default function Settings() {
         <PlanningSettings />
 
         <CalendarSettings />
+
+        <SharePlanSettings />
 
         <TimeZoneSettings />
 

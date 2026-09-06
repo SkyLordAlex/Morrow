@@ -505,6 +505,66 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /settings/share-link:
+    post:
+      operationId: setShareLink
+      tags: [settings]
+      summary: Create or revoke the public plan-share link (on again rotates it)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetShareLinkInput"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserSettings"
+        "401":
+          description: Not signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /shared/{token}:
+    get:
+      operationId: getSharedPlan
+      tags: [planner]
+      summary: Public read-only view of a shared plan
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Shared plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SharedPlan"
+        "404":
+          description: Link not active
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /reviews/highlights:
+    get:
+      operationId: listReviewHighlights
+      tags: [reviews]
+      summary: Public rating summary and a few quotable reviews
+      responses:
+        "200":
+          description: Highlights
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewHighlights"
   /planner/dashboard:
     get:
       operationId: getPlannerDashboard
@@ -1069,14 +1129,101 @@ components:
           oneOf:
             - type: string
             - type: "null"
+        shareToken:
+          oneOf:
+            - type: string
+            - type: "null"
       required:
-        [defaultAvailableMinutes, blockedWeekdays, preferredTime, calendarUrl]
+        [
+          defaultAvailableMinutes,
+          blockedWeekdays,
+          preferredTime,
+          calendarUrl,
+          shareToken,
+        ]
     SetCalendarFeedInput:
       type: object
       properties:
         enabled:
           type: boolean
       required: [enabled]
+    SetShareLinkInput:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+      required: [enabled]
+    SharedPlanAssignment:
+      type: object
+      properties:
+        title:
+          type: string
+        subject:
+          type: string
+        dueLabel:
+          type: string
+        progress:
+          type: number
+        accent:
+          type: string
+      required: [title, subject, dueLabel, progress, accent]
+    SharedPlanSession:
+      type: object
+      properties:
+        title:
+          type: string
+        subject:
+          type: string
+        date:
+          type: string
+          format: date
+        startTime:
+          type: string
+        durationMinutes:
+          type: number
+        accent:
+          type: string
+      required: [title, subject, date, startTime, durationMinutes, accent]
+    SharedPlan:
+      type: object
+      properties:
+        ownerName:
+          oneOf:
+            - type: string
+            - type: "null"
+        assignments:
+          type: array
+          items:
+            $ref: "#/components/schemas/SharedPlanAssignment"
+        upcoming:
+          type: array
+          items:
+            $ref: "#/components/schemas/SharedPlanSession"
+      required: [ownerName, assignments, upcoming]
+    ReviewHighlight:
+      type: object
+      properties:
+        rating:
+          type: number
+        body:
+          type: string
+        authorName:
+          oneOf:
+            - type: string
+            - type: "null"
+      required: [rating, body, authorName]
+    ReviewHighlights:
+      type: object
+      properties:
+        average:
+          type: number
+        count:
+          type: number
+        highlights:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReviewHighlight"
+      required: [average, count, highlights]
     UserSettingsInput:
       type: object
       properties:

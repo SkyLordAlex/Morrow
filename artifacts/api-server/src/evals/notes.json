@@ -173,6 +173,18 @@
     }
   },
   {
+    "name": "availability: bare no weekends",
+    "today": "2026-09-03",
+    "minutesPerDay": 90,
+    "note": "math test friday, no weekends",
+    "expect": {
+      "assignments": [
+        { "subject": "math", "kind": ["test", "exam", "quiz"], "dueInDays": [1, 1] }
+      ],
+      "blockedWeekdays": [0, 6]
+    }
+  },
+  {
     "name": "availability: swamped this weekend",
     "today": "2026-09-03",
     "minutesPerDay": 90,

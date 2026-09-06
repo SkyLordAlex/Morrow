@@ -37,6 +37,7 @@ import {
 } from '@workspace/api-client-react';
 import { AppShell } from '@/components/app-shell';
 import { ClearPlannerButton } from '@/components/clear-planner-button';
+import { ReviewPrompt } from '@/components/review-prompt';
 
 const accentStyles: Record<string, { ink: string; soft: string; line: string }> = {
   amber: { ink: '#B36A1E', soft: '#FFF0C9', line: '#E3B35D' },
@@ -612,6 +613,8 @@ export default function Dashboard() {
               </div>
             </div>
           ) : null}
+
+          <ReviewPrompt completedSessions={dashboard.completedSessions} />
 
           <div className="mt-9 grid gap-7 lg:grid-cols-[1.12fr_.88fr]">
             <section className="animate-rise delay-2" data-testid="section-today-sessions">

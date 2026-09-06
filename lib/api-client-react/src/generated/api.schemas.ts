@@ -290,10 +290,50 @@ export interface UserSettings {
   blockedWeekdays: number[];
   preferredTime: UserSettingsPreferredTime;
   calendarUrl: string | null;
+  shareToken: string | null;
 }
 
 export interface SetCalendarFeedInput {
   enabled: boolean;
+}
+
+export interface SetShareLinkInput {
+  enabled: boolean;
+}
+
+export interface SharedPlanAssignment {
+  title: string;
+  subject: string;
+  dueLabel: string;
+  progress: number;
+  accent: string;
+}
+
+export interface SharedPlanSession {
+  title: string;
+  subject: string;
+  date: string;
+  startTime: string;
+  durationMinutes: number;
+  accent: string;
+}
+
+export interface SharedPlan {
+  ownerName: string | null;
+  assignments: SharedPlanAssignment[];
+  upcoming: SharedPlanSession[];
+}
+
+export interface ReviewHighlight {
+  rating: number;
+  body: string;
+  authorName: string | null;
+}
+
+export interface ReviewHighlights {
+  average: number;
+  count: number;
+  highlights: ReviewHighlight[];
 }
 
 export type UserSettingsInputPreferredTime = typeof UserSettingsInputPreferredTime[keyof typeof UserSettingsInputPreferredTime];

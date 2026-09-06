@@ -2,12 +2,14 @@ import { Router, type IRouter, type Request } from "express";
 import {
   GetSettingsResponse,
   SetCalendarFeedBody,
+  SetShareLinkBody,
   UpdateSettingsBody,
 } from "@workspace/api-zod";
 import {
   getUserSettings,
   saveUserSettings,
   setCalendarFeed,
+  setShareLink,
   type ResolvedSettings,
 } from "../lib/settings.js";
 import { currentUserId, requireAuth } from "../middlewares/require-auth.js";
@@ -27,6 +29,8 @@ function withUrl(settings: ResolvedSettings, req: Request) {
     calendarUrl: settings.calendarToken
       ? `${publicOrigin(req)}/api/calendar/${settings.calendarToken}.ics`
       : null,
+    // shareToken is passed through; the web app builds the /s/<token> URL from
+    // its own origin.
   };
 }
 
@@ -63,6 +67,22 @@ router.post("/settings/calendar-feed", requireAuth, async (req, res, next) => {
   try {
     const { enabled } = SetCalendarFeedBody.parse(req.body);
     await setCalendarFeed(currentUserId(req), enabled);
+    const settings = await getUserSettings(currentUserId(req));
+    res.json(GetSettingsResponse.parse(withUrl(settings, req)));
+  } catch (error) {
+    if (error instanceof Error && error.name === "ZodError") {
+      res.status(400).json({ error: "Expected { enabled: boolean }." });
+      return;
+    }
+    next(error);
+  }
+});
+
+// Create or revoke the public plan-share link. Enabling again rotates it.
+router.post("/settings/share-link", requireAuth, async (req, res, next) => {
+  try {
+    const { enabled } = SetShareLinkBody.parse(req.body);
+    await setShareLink(currentUserId(req), enabled);
     const settings = await getUserSettings(currentUserId(req));
     res.json(GetSettingsResponse.parse(withUrl(settings, req)));
   } catch (error) {

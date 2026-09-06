@@ -254,7 +254,7 @@ function isDateOnlyClause(clause: string): boolean {
 // Phrases that mean "I'm not studying then". Apostrophes are optional so
 // "dont", "cant", "wont" match as well as "don't", "can't", "won't".
 const UNAVAILABLE_PHRASE =
-  /\b(?:ca(?:n'?t|nnot)|can not|wo(?:n'?t)|will not|do(?:n'?t)\s+(?:have|got)|does(?:n'?t)\s+have|have\s?n'?t\s+got|unable to|not\s+(?:free|available|able|around)|no\s+(?:time|study|studying|school|class|homework|work|free\s+time)|not\s+enough\s+time|short\s+on\s+time|out\s+of\s+time|busy|tied\s+up|swamped|slammed|booked|occupied|full\s+day|day\s+off|off\b|away|skip|avoid|have\s+(?:practice|work|a\s+shift|games?|rehearsal|plans))/;
+  /\b(?:ca(?:n'?t|nnot)|can not|wo(?:n'?t)|will not|do(?:n'?t)\s+(?:have|got)|does(?:n'?t)\s+have|have\s?n'?t\s+got|unable to|not\s+(?:free|available|able|around)|no\s+(?:time|study|studying|school|class|homework|work|free\s+time|weekends?|(?:mon|tues?|wed|thur?s?|fri|sat|sun)(?:day)?s?)|not\s+enough\s+time|short\s+on\s+time|out\s+of\s+time|busy|tied\s+up|swamped|slammed|booked|occupied|full\s+day|day\s+off|off\b|away|skip|avoid|have\s+(?:practice|work|a\s+shift|games?|rehearsal|plans))/;
 
 function isAvailabilityClause(clause: string): boolean {
   const c = clause.toLowerCase().trim();

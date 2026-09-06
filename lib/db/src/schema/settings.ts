@@ -29,6 +29,10 @@ export const userSettingsTable = pgTable("user_settings", {
   // (GET /calendar/<token>.ics). Null until the user turns the feed on.
   calendarToken: text("calendar_token"),
 
+  // Unguessable token for the public read-only plan page (/s/<token>). Null
+  // until the user creates a share link.
+  shareToken: text("share_token"),
+
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

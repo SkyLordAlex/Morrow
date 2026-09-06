@@ -12,4 +12,5 @@ export interface UserSettings {
   blockedWeekdays: number[];
   preferredTime: UserSettingsPreferredTime;
   calendarUrl: string | null;
+  shareToken: string | null;
 }

@@ -13,11 +13,13 @@ import Reviews from '@/pages/reviews';
 import Admin from '@/pages/admin';
 import Settings from '@/pages/settings';
 import SignIn from '@/pages/sign-in';
+import SharedPlan from '@/pages/shared-plan';
 import { Privacy, Terms } from '@/pages/legal';
 import {
   Route,
   Switch,
   useLocation,
+  useRoute,
   Router as WouterRouter,
 } from 'wouter';
 
@@ -48,8 +50,12 @@ function RoutedErrorBoundary({ children }: { children: ReactNode }) {
 function AuthGate() {
   const { status } = useAuth();
   const [location] = useLocation();
+  const [isShared, sharedParams] = useRoute('/s/:token');
 
-  // Legal pages are reachable without an account — the sign-in screen links them.
+  // Public pages, reachable without an account.
+  if (isShared && sharedParams?.token) {
+    return <SharedPlan token={sharedParams.token} />;
+  }
   if (location === '/terms') return <Terms />;
   if (location === '/privacy') return <Privacy />;
 

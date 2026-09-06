@@ -306,7 +306,8 @@ export const GetSettingsResponse = zod.object({
   "defaultAvailableMinutes": zod.number(),
   "blockedWeekdays": zod.array(zod.number()),
   "preferredTime": zod.enum(['morning', 'afternoon', 'evening']),
-  "calendarUrl": zod.union([zod.string(),zod.null()])
+  "calendarUrl": zod.union([zod.string(),zod.null()]),
+  "shareToken": zod.union([zod.string(),zod.null()])
 })
 
 
@@ -328,7 +329,8 @@ export const UpdateSettingsResponse = zod.object({
   "defaultAvailableMinutes": zod.number(),
   "blockedWeekdays": zod.array(zod.number()),
   "preferredTime": zod.enum(['morning', 'afternoon', 'evening']),
-  "calendarUrl": zod.union([zod.string(),zod.null()])
+  "calendarUrl": zod.union([zod.string(),zod.null()]),
+  "shareToken": zod.union([zod.string(),zod.null()])
 })
 
 
@@ -343,7 +345,65 @@ export const SetCalendarFeedResponse = zod.object({
   "defaultAvailableMinutes": zod.number(),
   "blockedWeekdays": zod.array(zod.number()),
   "preferredTime": zod.enum(['morning', 'afternoon', 'evening']),
-  "calendarUrl": zod.union([zod.string(),zod.null()])
+  "calendarUrl": zod.union([zod.string(),zod.null()]),
+  "shareToken": zod.union([zod.string(),zod.null()])
+})
+
+
+/**
+ * @summary Create or revoke the public plan-share link (on again rotates it)
+ */
+export const SetShareLinkBody = zod.object({
+  "enabled": zod.boolean()
+})
+
+export const SetShareLinkResponse = zod.object({
+  "defaultAvailableMinutes": zod.number(),
+  "blockedWeekdays": zod.array(zod.number()),
+  "preferredTime": zod.enum(['morning', 'afternoon', 'evening']),
+  "calendarUrl": zod.union([zod.string(),zod.null()]),
+  "shareToken": zod.union([zod.string(),zod.null()])
+})
+
+
+/**
+ * @summary Public read-only view of a shared plan
+ */
+export const GetSharedPlanParams = zod.object({
+  "token": zod.coerce.string()
+})
+
+export const GetSharedPlanResponse = zod.object({
+  "ownerName": zod.union([zod.string(),zod.null()]),
+  "assignments": zod.array(zod.object({
+  "title": zod.string(),
+  "subject": zod.string(),
+  "dueLabel": zod.string(),
+  "progress": zod.number(),
+  "accent": zod.string()
+})),
+  "upcoming": zod.array(zod.object({
+  "title": zod.string(),
+  "subject": zod.string(),
+  "date": zod.coerce.date(),
+  "startTime": zod.string(),
+  "durationMinutes": zod.number(),
+  "accent": zod.string()
+}))
+})
+
+
+/**
+ * @summary Public rating summary and a few quotable reviews
+ */
+export const ListReviewHighlightsResponse = zod.object({
+  "average": zod.number(),
+  "count": zod.number(),
+  "highlights": zod.array(zod.object({
+  "rating": zod.number(),
+  "body": zod.string(),
+  "authorName": zod.union([zod.string(),zod.null()])
+}))
 })
 
 
