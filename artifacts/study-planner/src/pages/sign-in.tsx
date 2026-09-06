@@ -205,6 +205,12 @@ export default function SignIn() {
                 data-testid="input-email"
                 placeholder="you@school.edu"
               />
+              {mode === 'register' ? (
+                <p className="text-[11px] leading-4 text-muted-foreground">
+                  Use a real inbox you can get into — it&apos;s how you reset a
+                  forgotten password and get important account notices.
+                </p>
+              ) : null}
             </div>
 
             {mode !== 'forgot' ? (
