@@ -10,11 +10,11 @@ arrives → set a new password at `/reset-password?token=…`.
 - `POST /auth/forgot-password` (always 204 — no account enumeration) and
   `POST /auth/reset-password` (consumes the token, updates the hash, revokes
   all that user's sessions).
-- Email via the **Gmail REST API over HTTPS** (`lib/email.ts`) — SMTP is
-  blocked on Render's free tier. OAuth `GMAIL_USER` / `GMAIL_CLIENT_ID` /
-  `GMAIL_CLIENT_SECRET` / `GMAIL_REFRESH_TOKEN`; the last comes from
-  `pnpm --filter @workspace/api-server run gmail:token`. Unset → the link is
-  logged instead. Reset-link base is the request Origin, or `WEB_APP_URL`.
+- Email over an **HTTPS email API** (`lib/email.ts`) — SMTP is blocked on
+  Render's free tier. Two providers, first-configured wins: **Brevo**
+  (`BREVO_API_KEY` + `EMAIL_FROM`; free 300/day, no domain) or the **Gmail
+  API** (`GMAIL_*`). Unset both → the link is logged instead. Reset-link base
+  is the request Origin, or `WEB_APP_URL`.
 
 ## Growth: shareable plans, review nudge, social proof (this pass)
 

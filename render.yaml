@@ -41,14 +41,18 @@ services:
         sync: false # optional — enables Apple sign-in
       - key: ADMIN_EMAILS
         sync: false # optional — comma-separated admin emails
+      - key: BREVO_API_KEY
+        sync: false # password-reset email — free Brevo API key (brevo.com)
+      - key: EMAIL_FROM
+        sync: false # the sender address verified in Brevo
       - key: GMAIL_USER
-        sync: false # optional — Gmail address that sends password-reset email
+        sync: false # alt provider — Gmail API (see docs/AUTH.md)
       - key: GMAIL_CLIENT_ID
-        sync: false # optional — OAuth "Desktop app" client id (Gmail API)
+        sync: false
       - key: GMAIL_CLIENT_SECRET
-        sync: false # optional — its client secret
+        sync: false
       - key: GMAIL_REFRESH_TOKEN
-        sync: false # optional — from `pnpm --filter @workspace/api-server run gmail:token`
+        sync: false
       - key: EMAIL_FROM_NAME
         sync: false # optional — "From" display name, defaults to "Morrow"
       - key: WEB_APP_URL

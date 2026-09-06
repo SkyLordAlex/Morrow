@@ -76,32 +76,34 @@ Server-verified, bearer-token auth.
 
 `forgot-password` mints a token in `password_reset_tokens` (SHA-256 hashed,
 one hour, single-use), builds `<origin>/reset-password?token=…`, and emails it
-via the **Gmail REST API** over HTTPS (`lib/email.ts`) — SMTP is blocked on
-Render's free tier. Sends from a real Gmail account, free, ~500/day.
+over an **HTTPS email API** (`lib/email.ts`) — SMTP is blocked on Render's free
+tier. Two providers; the first one configured wins. With neither set, the link
+is written to the server log instead, so the flow stays testable. The link
+base is the request `Origin` unless `WEB_APP_URL` overrides it.
 
-Unset any of the four `GMAIL_*` vars → the link is written to the server log
-instead, so the flow is still testable. The link base is the request `Origin`
-unless `WEB_APP_URL` overrides it.
+**Brevo (recommended)** — free 300 emails/day, no domain needed:
 
-**One-time OAuth setup:**
+1. [brevo.com](https://www.brevo.com/) → sign up.
+2. **Senders, Domains & Dedicated IPs → Senders → Add a sender** → enter the
+   from-address → click the confirmation link Brevo emails to it.
+3. **SMTP & API → API Keys → Generate a new API key**.
+4. Set `BREVO_API_KEY` and `EMAIL_FROM` (the verified sender address), plus
+   optional `EMAIL_FROM_NAME`, in the API server's environment.
 
-1. [Google Cloud Console](https://console.cloud.google.com/) → create/pick a
-   project → **APIs & Services**:
-   - **Enable APIs** → enable **Gmail API**.
-   - **OAuth consent screen** → *External* → add the sending Gmail address
-     under **Test users** → add scope
-     `https://www.googleapis.com/auth/gmail.send`.
-   - **Credentials** → **Create credentials** → **OAuth client ID** → type
-     **Desktop app**. Copy the client ID and secret.
-2. In `artifacts/api-server/.env` set `GMAIL_USER`, `GMAIL_CLIENT_ID`,
-   `GMAIL_CLIENT_SECRET`, then run:
-   ```
-   pnpm --filter @workspace/api-server run gmail:token
-   ```
-   A browser opens; sign in as the sending account and approve. Copy the
-   printed `GMAIL_REFRESH_TOKEN`.
-3. Set all four `GMAIL_*` vars (plus optional `EMAIL_FROM_NAME`) in the API
-   server's environment — locally in `.env`, in production on the host.
+**Gmail API (alternative)** — sends from a real Gmail account. Note that
+brand-new Gmail accounts used only for API access are routinely disabled by
+Google as bots; use an established personal account, or use Brevo.
+
+1. [Google Cloud Console](https://console.cloud.google.com/) → project →
+   **APIs & Services**: enable **Gmail API**; **OAuth consent screen**
+   (*External*, add the address under **Test users**, scope
+   `https://www.googleapis.com/auth/gmail.send`); **Credentials → OAuth client
+   ID → Desktop app**.
+2. Set `GMAIL_USER`, `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET` in
+   `artifacts/api-server/.env`, then run
+   `pnpm --filter @workspace/api-server run gmail:token`, approve in the
+   browser, and copy the printed `GMAIL_REFRESH_TOKEN`.
+3. Set all four `GMAIL_*` vars in the environment.
 
 ### Roles
 
