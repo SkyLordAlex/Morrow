@@ -10,8 +10,9 @@ Three things so the app spreads on its own:
   `user_settings.share_token`, `POST /settings/share-link`, and a public
   `GET /shared/<token>`. **`db push` again.**
 - **In-app review nudge.** After 3 completed sessions, a dismissible card on
-  the dashboard invites a review (stars link to the reviews page). Per-device
-  dismissal.
+  the dashboard invites a review. Clicking a star drops down an inline
+  textarea so the whole review is posted from the dashboard; a short "thanks"
+  replaces the card. Per-device dismissal.
 - **Social proof on the sign-in page.** Public `GET /reviews/highlights`
   (rating average + a couple of quotable reviews); shown under the sign-in
   card when there are any.
