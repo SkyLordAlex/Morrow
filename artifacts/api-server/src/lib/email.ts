@@ -54,13 +54,17 @@ export async function sendMail(mail: Mail): Promise<boolean> {
   }
 
   try {
-    await transport().sendMail({
+    const info = await transport().sendMail({
       from: `"${FROM_NAME}" <${GMAIL_USER}>`,
       to: mail.to,
       subject: mail.subject,
       text: mail.text,
       html: mail.html,
     });
+    logger.info(
+      { to: mail.to, messageId: info.messageId },
+      "Email sent",
+    );
     return true;
   } catch (error) {
     logger.error(

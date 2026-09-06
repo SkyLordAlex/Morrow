@@ -121,12 +121,16 @@ router.post("/auth/forgot-password", async (req, res, next) => {
     // identical to the caller — a plain 204.
     try {
       const user = await findUserByEmail(email);
+      logger.info(
+        { email: normalizeEmail(email), matched: Boolean(user) },
+        "forgot-password requested",
+      );
       if (user) {
         const token = await createResetToken(user.id);
         const base = resetLinkBase(req);
         const link = `${base}/reset-password?token=${token}`;
         const name = user.displayName?.trim() || "there";
-        await sendMail({
+        const sent = await sendMail({
           to: user.email,
           subject: "Reset your Morrow password",
           text: [
@@ -145,6 +149,7 @@ router.post("/auth/forgot-password", async (req, res, next) => {
             "<p style=\"color:#667\">If you didn't ask for this, you can ignore this email — your password won't change.</p>",
           ].join(""),
         });
+        logger.info({ to: user.email, sent }, "forgot-password: reset email");
       }
     } catch (inner) {
       logger.error({ err: inner }, "forgot-password: could not send reset link");
